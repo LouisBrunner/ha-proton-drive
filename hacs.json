@@ -1,5 +1,7 @@
 {
-    "name": "Integration blueprint",
-    "homeassistant": "2025.2.4",
-    "hacs": "2.0.1"
+  "name": "Proton Drive",
+  "homeassistant": "2025.2.4",
+  "hacs": "2.0.1",
+  "zip_release": true,
+  "filename": "proton_drive.zip"
 }
