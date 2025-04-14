@@ -12,7 +12,6 @@ from homeassistant.components.backup import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.aiohttp_client import ChunkAsyncStreamIterator
 from slugify import slugify
 
 from .api import ProtonDriveAPIError
@@ -88,8 +87,7 @@ class ProtonDriveBackupAgent(BackupAgent):
             file_id = await self._client.get_backup_file_id(backup_id)
             if file_id:
                 LOGGER.debug("Downloading file_id: %s", file_id)
-                stream = await self._client.download_backup(file_id)
-                return ChunkAsyncStreamIterator(stream)
+                return self._client.download_backup(file_id)
         except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to download backup: {err}"
             raise BackupAgentError(msg) from err
@@ -159,7 +157,7 @@ class ProtonDriveBackupAgent(BackupAgent):
 
         Raises BackupNotFound if the backup does not exist.
         """
-        backups = await self.list_backups()
+        backups = await self.async_list_backups()
         for backup in backups:
             if backup.backup_id == backup_id:
                 return backup

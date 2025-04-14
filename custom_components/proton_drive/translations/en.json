@@ -7,6 +7,24 @@
           "email": "[%key:common::config_flow::data::email%]",
           "password": "[%key:common::config_flow::data::password%]"
         }
+      },
+      "reauth_confirm": {
+        "description": "You need to reauthenticate your Proton account",
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      },
+      "mfa": {
+        "title": "Enter your MFA code",
+        "data": {
+          "mfa_code": "MFA code (6-digits)"
+        }
+      },
+      "folders": {
+        "title": "Where to store the backups",
+        "data": {
+          "root_folder": "The folder inside your Proton Drive where backups will be added"
+        }
       }
     },
     "error": {

@@ -17,12 +17,8 @@
   ],
   "config_flow": true,
   "requirements": [
-    "wheel==0.45.1",
-    "python-gnupg==0.5.4",
-    "requests==2.32.3",
-    "pyOpenSSL==25.0.0",
-    "bcrypt==4.2.0",
-    "proton-client @ git+https://github.com/ProtonMail/proton-python-client@0.7.1"
+    "aiofiles>=24.1.0",
+    "proton @ git+https://github.com/LouisBrunner/gopy-ha-proton-drive@main"
   ],
   "version": "0.0.1"
 }
