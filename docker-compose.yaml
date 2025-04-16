@@ -1,0 +1,7 @@
+services:
+  devcontainer:
+    build: {}
+    volumes:
+      - .:/project
+    ports:
+      - "8123:8123"

@@ -42,7 +42,17 @@ else:
 
 
 print("Creating client")
-client = NewClient(creds, lambda handle: update_creds(Credentials(handle=handle)))
+client = NewClient(
+    creds,
+    lambda uid, access, refresh: update_creds(
+        Credentials(
+            UID=uid,
+            AccessToken=access,
+            RefreshToken=refresh,
+            SaltedKeyPass=creds.SaltedKeyPass,
+        )
+    ),
+)
 selected_share = os.getenv("PROTON_SHARE_ID")
 if selected_share:
     client.SelectShare(selected_share)

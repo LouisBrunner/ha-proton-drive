@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.loader import Integration
 
     from .api import ProtonDriveClient
     from .data import ProtonDriveConfigEntry
@@ -32,4 +31,3 @@ class ProtonDriveData:
     """Data for the Proton Drive integration."""
 
     client: ProtonDriveClient
-    integration: Integration

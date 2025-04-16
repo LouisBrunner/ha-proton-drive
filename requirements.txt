@@ -1,6 +1,7 @@
 aiofiles>=24.1.0
--e ../gopy-ha-proton-drive
+# -e ../gopy-ha-proton-drive
+proton @ git+https://github.com/LouisBrunner/gopy-ha-proton-drive@main
 
-homeassistant==2025.2.4
+homeassistant>=2025.4.1
 pip>=21.3.1
 ruff==0.11.4

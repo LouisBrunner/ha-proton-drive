@@ -7,6 +7,7 @@ LOGGER: Logger = getLogger(__package__)
 DOMAIN = "proton_drive"
 
 CONF_MFA_CODE = "mfa_code"
+CONF_SHARE_ID = "share_id"
 CONF_ROOT_FOLDER = "root_folder"
 
 CONF_CREDS_UID = "creds_uid"

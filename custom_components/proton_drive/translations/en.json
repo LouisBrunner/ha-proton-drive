@@ -1,17 +1,17 @@
 {
   "config": {
     "step": {
-      "user": {
-        "description": "Connect using the same credentials as your Proton account",
+      "auth": {
+        "description": "Enter your Proton account credentials",
         "data": {
-          "email": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "email": "Email",
+          "password": "Password"
         }
       },
       "reauth_confirm": {
         "description": "You need to reauthenticate your Proton account",
         "data": {
-          "password": "[%key:common::config_flow::data::password%]"
+          "password": "Password"
         }
       },
       "mfa": {
@@ -23,17 +23,19 @@
       "folders": {
         "title": "Where to store the backups",
         "data": {
-          "root_folder": "The folder inside your Proton Drive where backups will be added"
+          "share_id": "Drive",
+          "root_folder": "Folder, e.g. Back/HASS, leave empty for root"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "cannot_connect": "Could not connect to Proton API: {error}",
+      "invalid_auth": "Failed to authenticate to Proton API: {error}",
+      "unknown": "Unknown Proton API error: {error}"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]"
+      "already_configured": "This integration has already been configured",
+      "reconfigure_successful": "Reconfigure successful"
     }
   }
 }

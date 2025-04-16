@@ -10,7 +10,7 @@ import aiofiles.os
 import aiofiles.tempfile
 from homeassistant.components.backup import AgentBackup
 from homeassistant.components.backup.util import suggested_filename
-from proton.proton import Credentials, Folder, Login, NewClient
+from proton.proton import Credentials, Folder, Login, NewClient, Share
 
 from .const import LOGGER
 
@@ -45,26 +45,39 @@ class ProtonDriveAPIMFAError(
 class ProtonDriveClient:
     """Client for the Proton Drive API."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         hass: HomeAssistant,
         instance_id: str,
         creds: Credentials,
         base_folder: str,
+        share_id: str,
+        update_creds: Callable[[Credentials], None],
     ) -> None:
         """Client for the Proton Drive API."""
         self._hass = hass
         self._instance_id = instance_id
-        self._creds = creds
         self._client = NewClient(
-            creds, lambda handle: self.__update_credentials(Credentials(handle=handle))
+            creds,
+            lambda uid, access, refresh: update_creds(
+                Credentials(
+                    UID=uid,
+                    AccessToken=access,
+                    RefreshToken=refresh,
+                    SaltedKeyPass=creds.SaltedKeyPass,
+                )
+            ),
         )
+        if share_id != "":
+            self._client.SelectShare(share_id)
         self._folder = base_folder
 
-    def __update_credentials(self, creds: Credentials) -> None:
-        self.__creds = creds
-        # TODO: NEED TO UPDATE IT IN HASS!!!!!!!
+    async def list_shares(self) -> list[Share]:
+        """List available share drives."""
+        return await self.__handle_errors(
+            hass=self._hass, call=lambda: self._client.ListShares()
+        )
 
     async def __create_root_folder_if_needed(self) -> Folder:
         """Create the Home Assistant folder if it doesn't exist."""
@@ -144,10 +157,13 @@ class ProtonDriveClient:
         except RuntimeError as e:
             LOGGER.exception("proton API call failed")
             if "Code=9001" in str(e):
-                raise ProtonDriveAPIMFAError from e
+                msg = f"MFA Error: {e}"
+                raise ProtonDriveAPIMFAError(msg) from e
             if "Code=8002" in str(e):
-                raise ProtonDriveAPIAuthenticationError from e
-            raise ProtonDriveAPIError from e
+                msg = f"Authentication Error: {e}"
+                raise ProtonDriveAPIAuthenticationError(msg) from e
+            msg = f"API Error: {e}"
+            raise ProtonDriveAPIError(msg) from e
 
     @classmethod
     async def login(
