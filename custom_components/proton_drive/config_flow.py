@@ -114,15 +114,16 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Handle a flow initialized by the user."""
-        return await self.__async_step_auth(user_input)
+        return await self.async_step_auth(user_input)
 
-    async def __async_step_auth(
+    async def async_step_auth(
         self,
         user_input: dict | None = None,
         *,
         errors: dict | None = None,
         description_placeholders: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
+        """Allow user to provide its Proton credentials."""
         errors = errors or {}
         description_placeholders = description_placeholders or {}
 
@@ -143,7 +144,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
                 description_placeholders["error"] = str(error)
             except ProtonDriveAPIMFAError:
-                return await self.__async_step_mfa()
+                return await self.async_step_mfa()
             except ProtonDriveAPIError as error:
                 errors["base"] = "unknown"
                 description_placeholders["error"] = str(error)
@@ -157,9 +158,14 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders=description_placeholders,
         )
 
-    async def __async_step_mfa(
+    async def async_step_mfa(
         self, user_input: dict | None = None
     ) -> config_entries.ConfigFlowResult:
+        """
+        Ask user to supply a MFA code.
+
+        Optional, only required if the API asks for it.
+        """
         errors, description_placeholders = {}, {}
 
         if user_input is not None:
@@ -178,7 +184,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except (ProtonDriveAPIAuthenticationError, ProtonDriveAPIMFAError) as error:
                 errors["base"] = "invalid_auth"
                 description_placeholders["error"] = str(error)
-                return await self.__async_step_auth(
+                return await self.async_step_auth(
                     None,
                     errors=errors,
                     description_placeholders=description_placeholders,
@@ -200,17 +206,20 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def __async_step_after_auth(self) -> config_entries.ConfigFlowResult:
         if self.source == config_entries.SOURCE_REAUTH:
             return await self.__finish()
-        return await self.__async_step_folders()
+        return await self.async_step_folders()
 
     def __update_creds(self, creds: Credentials) -> None:
         self._creds = creds
 
-    async def __async_step_folders(
+    async def async_step_folders(
         self, user_input: dict | None = None
     ) -> config_entries.ConfigFlowResult:
+        """Allow user to configure where the backups are stored."""
         errors, description_placeholders = {}, {}
 
         if self._shares is None:
+            assert self._creds is not None
+
             try:
                 self._shares = await ProtonDriveClient(
                     hass=self.hass,
@@ -248,12 +257,12 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Handle a flow started when the user need to reauthenticate."""
         self._email = entry_data[CONF_EMAIL]
-        return await self.__async_step_reauth_confirm()
+        return await self.async_step_reauth_confirm()
 
-    async def __async_step_reauth_confirm(
+    async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Dialog that informs the user that reauth is required."""
+        """Require user to re-enter their password."""
         if user_input is None:
             return self.async_show_form(
                 step_id="reauth_confirm",
@@ -271,7 +280,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._creds = create_credentials_from_data(entry.data)
         self._share_id = entry.data[CONF_SHARE_ID]
         self._root_folder = entry.data[CONF_ROOT_FOLDER]
-        return await self.__async_step_folders(user_input)
+        return await self.async_step_folders(user_input)
 
     async def __authenticate(
         self, *, email: str, password: str, mfa: str | None = None
@@ -283,6 +292,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def __finish(self) -> config_entries.ConfigFlowResult:
         assert self._email is not None
+        assert self._creds is not None
 
         await self.async_set_unique_id(unique_id=slugify(self._email))
         if self.source in (
@@ -308,8 +318,6 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 entry,
                 data_updates=updates,
             )
-
-        assert self._creds is not None
 
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
