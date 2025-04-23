@@ -18,7 +18,7 @@
   ],
   "requirements": [
     "aiofiles>=24.1.0",
-    "gopy-ha-proton-drive==0.0.1"
+    "gopy-ha-proton-drive==0.0.2"
   ],
   "version": "0.0.5"
 }
