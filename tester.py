@@ -37,21 +37,14 @@ if cred_file_path.exists():
         )
 else:
     print("Login")
-    creds = Login(os.getenv("PROTON_EMAIL"), getpass(), "")
+    creds = Login(os.getenv("PROTON_EMAIL", ""), getpass(), "")
     update_creds(creds)
 
 
 print("Creating client")
 client = NewClient(
     creds,
-    lambda uid, access, refresh: update_creds(
-        Credentials(
-            UID=uid,
-            AccessToken=access,
-            RefreshToken=refresh,
-            SaltedKeyPass=creds.SaltedKeyPass,
-        )
-    ),
+    update_creds,
 )
 selected_share = os.getenv("PROTON_SHARE_ID")
 if selected_share:

@@ -60,14 +60,7 @@ class ProtonDriveClient:
         self._instance_id = instance_id
         self._client = NewClient(
             creds,
-            lambda uid, access, refresh: update_creds(
-                Credentials(
-                    UID=uid,
-                    AccessToken=access,
-                    RefreshToken=refresh,
-                    SaltedKeyPass=creds.SaltedKeyPass,
-                )
-            ),
+            update_creds,
         )
         if share_id != "":
             self._client.SelectShare(share_id)
@@ -128,7 +121,7 @@ class ProtonDriveClient:
                     backup.backup_id,
                     suggested_filename(backup),
                     json.dumps(backup.as_dict()),
-                    f.name,
+                    str(f.name),
                 ),
             )
 
