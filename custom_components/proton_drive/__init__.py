@@ -37,12 +37,14 @@ def update_config(
     hass: HomeAssistant, current: ProtonDriveConfigEntry, creds: Credentials
 ) -> None:
     """Update the config entry with new credentials."""
-    hass.config_entries.async_update_entry(
-        current,
-        data={
-            **current.data,
-            **serialize_credentials_to_data(creds),
-        },
+    hass.add_job(
+        lambda: hass.config_entries.async_update_entry(
+            current,
+            data={
+                **current.data,
+                **serialize_credentials_to_data(creds),
+            },
+        )
     )
 
 
