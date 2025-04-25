@@ -35,6 +35,7 @@
     },
     "abort": {
       "already_configured": "This integration has already been configured",
+      "reauth_successful": "Re-authentication successful",
       "reconfigure_successful": "Reconfigure successful"
     }
   }
