@@ -84,7 +84,7 @@ class _ErrorCatcher(ContextDecorator, AsyncContextDecorator):
             return False
         LOGGER.exception("proton API call failed")
         e = exc_val
-        if "Code=9001" in str(e):
+        if "Code=9001" in str(e) or "--protondrive-2fa=000000" in str(e):
             msg = f"MFA Error: {e}"
             raise ProtonDriveAPIMFAError(msg) from e
         if "Code=8002" in str(e) or "Code=10013" in str(e):
