@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import instance_id
 
@@ -37,15 +38,18 @@ def update_config(
     hass: HomeAssistant, current: ProtonDriveConfigEntry, creds: Credentials
 ) -> None:
     """Update the config entry with new credentials."""
-    hass.add_job(
-        lambda: hass.config_entries.async_update_entry(
+
+    @callback
+    def async_update_entry() -> None:
+        hass.config_entries.async_update_entry(
             current,
             data={
                 **current.data,
                 **serialize_credentials_to_data(creds),
             },
         )
-    )
+
+    hass.add_job(async_update_entry)
 
 
 async def async_setup_entry(
