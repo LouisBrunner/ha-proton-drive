@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers import instance_id, selector
+from proton.proton import Share
 from slugify import slugify
 
 from .api import (
@@ -24,7 +25,10 @@ from .helpers import create_credentials_from_data, serialize_credentials_to_data
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from proton.proton import Credentials, Share
+    from proton.proton import Credentials
+
+
+INTERNAL_DEFAULT_SHARE_ID = "why-dont-you-accept-empty-strings"
 
 
 def form_config_auth(*, email: str | None) -> vol.Schema:
@@ -74,9 +78,14 @@ def form_config_mfa() -> vol.Schema:
 
 
 def form_config_folders(
-    *, share_id: str | None, root_folder: str | None, shares: list[Share]
+    *, share_id: str | None, root_folder: str | None, shares: list[Share] | None
 ) -> vol.Schema:
     """Create a form schema for the folders config step."""
+    fshares = (
+        shares
+        if shares
+        else [Share(Name="My files", ShareID=INTERNAL_DEFAULT_SHARE_ID)]
+    )
     return vol.Schema(
         {
             vol.Required(CONF_SHARE_ID, default=share_id): selector.SelectSelector(
@@ -84,7 +93,7 @@ def form_config_folders(
                     mode=selector.SelectSelectorMode.DROPDOWN,
                     options=[
                         selector.SelectOptionDict(label=share.Name, value=share.ShareID)
-                        for share in shares
+                        for share in fshares
                     ],
                 ),
             ),
@@ -232,10 +241,11 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except ProtonDriveAPIError as error:
                 errors["base"] = "unknown"
                 description_placeholders["error"] = str(error)
-        assert self._shares is not None
 
         if user_input is not None:
             self._share_id = user_input[CONF_SHARE_ID]
+            if self._share_id == INTERNAL_DEFAULT_SHARE_ID:
+                self._share_id = ""
             self._root_folder = user_input[CONF_ROOT_FOLDER]
 
             return await self.__finish()
