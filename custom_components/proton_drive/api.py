@@ -7,6 +7,7 @@ from contextlib import (
     AsyncContextDecorator,
     ContextDecorator,
 )
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self
 
 import aiofiles
@@ -119,6 +120,10 @@ class ProtonDriveClient:
                 self._client.SelectShare(share_id)
         self._folder = base_folder
 
+        # can't use /tmp as backups might be bigger than RAM: https://github.com/LouisBrunner/ha-proton-drive/issues/47
+        # same as Core: https://github.com/home-assistant/core/blob/4fdbe82df23113ea811e5095b844c3f927817b53/homeassistant/components/backup/manager.py#L1646
+        self.__temp_backup_dir = Path(self._hass.config.path("tmp_backups"))
+
     async def list_shares(self) -> list[Share]:
         """List available share drives."""
         return await self.__call_api(
@@ -162,7 +167,10 @@ class ProtonDriveClient:
     ) -> None:
         """Upload a Home Assistant backup."""
         folder = await self.__create_root_folder_if_needed()
-        async with aiofiles.tempfile.NamedTemporaryFile() as f:
+        self.__temp_backup_dir.mkdir(exist_ok=True)
+        async with aiofiles.tempfile.NamedTemporaryFile(
+            dir=self.__temp_backup_dir
+        ) as f:
             async for chunk in await open_stream():
                 await f.write(chunk)
             await f.flush()
