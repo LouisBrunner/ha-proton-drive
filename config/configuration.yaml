@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.proton-drive: debug
+    custom_components.proton_drive: debug

@@ -57,6 +57,8 @@ async def async_setup_entry(
     entry: ProtonDriveConfigEntry,
 ) -> bool:
     """Set up Proton Drive from a config entry."""
+    ProtonDriveClient.configure_logger()
+
     creds = create_credentials_from_data(entry.data)
 
     try:

@@ -2,7 +2,7 @@
 
 from logging import Logger, getLogger
 
-LOGGER: Logger = getLogger(__package__)
+LOGGER: Logger = getLogger(__name__)
 
 DOMAIN = "proton_drive"
 
