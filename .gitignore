@@ -20,3 +20,5 @@ config/*
 credentials.json
 
 .DS_Store
+
+gopy-wheels

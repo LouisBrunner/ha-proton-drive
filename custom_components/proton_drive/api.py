@@ -15,7 +15,7 @@ import aiofiles.os
 import aiofiles.tempfile
 from homeassistant.components.backup import AgentBackup
 from homeassistant.components.backup.util import suggested_filename
-from proton.proton import Credentials, Folder, Login, NewClient, Share
+from proton.proton import ConfigureLogger, Credentials, Folder, Login, NewClient, Share
 
 from .const import LOGGER
 
@@ -97,6 +97,11 @@ class _ErrorCatcher(ContextDecorator, AsyncContextDecorator):
 
 class ProtonDriveClient:
     """Client for the Proton Drive API."""
+
+    @classmethod
+    def configure_logger(cls) -> None:
+        """Configure the Proton Drive logger."""
+        ConfigureLogger(LOGGER)
 
     def __init__(  # noqa: PLR0913
         self,
