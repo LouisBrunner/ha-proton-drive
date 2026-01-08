@@ -77,8 +77,6 @@ class ProtonDriveBackupAgent(BackupAgent):
         """
         Download a backup file.
 
-        Raises BackupNotFound if the backup does not exist.
-
         :param backup_id: The ID of the backup that was returned in async_list_backups.
         :return: An async iterator that yields bytes.
         """
@@ -115,8 +113,6 @@ class ProtonDriveBackupAgent(BackupAgent):
     ) -> None:
         """
         Delete a backup file.
-
-        Raises BackupNotFound if the backup does not exist.
 
         :param backup_id: The ID of the backup that was returned in async_list_backups.
         """
