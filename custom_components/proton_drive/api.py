@@ -178,6 +178,8 @@ class ProtonDriveClient:
                     suggested_filename(backup),
                     json.dumps(backup.as_dict()),
                     str(f.name),
+                    max_tries=3,
+                    chunk_size_bytes=1 * 1024 * 1024 * 1024,  # 1 GB
                 ),
             )
 
