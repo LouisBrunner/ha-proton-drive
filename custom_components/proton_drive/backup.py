@@ -77,22 +77,15 @@ class ProtonDriveBackupAgent(BackupAgent):
         """
         Download a backup file.
 
-        Raises BackupNotFound if the backup does not exist.
-
         :param backup_id: The ID of the backup that was returned in async_list_backups.
         :return: An async iterator that yields bytes.
         """
         LOGGER.debug("Downloading backup_id: %s", backup_id)
         try:
-            file_id = await self._client.get_backup_file_id(backup_id)
-            if file_id:
-                LOGGER.debug("Downloading file_id: %s", file_id)
-                return self._client.download_backup(file_id)
+            return self._client.download_backup(backup_id)
         except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to download backup: {err}"
             raise BackupAgentError(msg) from err
-        msg = f"Backup {backup_id} not found"
-        raise BackupNotFound(msg)
 
     async def async_upload_backup(
         self,
@@ -121,23 +114,15 @@ class ProtonDriveBackupAgent(BackupAgent):
         """
         Delete a backup file.
 
-        Raises BackupNotFound if the backup does not exist.
-
         :param backup_id: The ID of the backup that was returned in async_list_backups.
         """
         LOGGER.debug("Deleting backup_id: %s", backup_id)
         try:
-            file_id = await self._client.get_backup_file_id(backup_id)
-            if file_id:
-                LOGGER.debug("Deleting file_id: %s", file_id)
-                await self._client.delete_backup(file_id)
-                LOGGER.debug("Deleted backup_id: %s", backup_id)
-                return
+            await self._client.delete_backup(backup_id)
+            LOGGER.debug("Deleted backup_id: %s", backup_id)
         except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to delete backup: {err}"
             raise BackupAgentError(msg) from err
-        msg = f"Backup {backup_id} not found"
-        raise BackupNotFound(msg)
 
     async def async_list_backups(self, **_kwargs: Any) -> list[AgentBackup]:
         """List backups."""

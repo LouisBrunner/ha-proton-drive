@@ -141,22 +141,12 @@ class ProtonDriveClient:
             hass=self._hass, call=lambda: self._client.MakeRootFolder(self._folder)
         )
 
-    async def get_backup_file_id(self, backup_id: str) -> str | None:
-        """Get a Proton Drive link ID based on the Home Assistant backup ID."""
+    async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:
+        """Download a Home Assistant backup."""
         folder = await self.__create_root_folder_if_needed()
-        try:
-            return await self.__call_api(
-                hass=self._hass,
-                call=lambda: folder.FindBackup(self._instance_id, backup_id),
-            )
-        except ProtonDriveAPIError:
-            return None
-
-    async def download_backup(self, link_id: str) -> AsyncIterator[bytes]:
-        """Download a Home Assistant backup using the Proton Drive link ID."""
         file_path = await self.__call_api(
             hass=self._hass,
-            call=lambda: self._client.DownloadFile(link_id),
+            call=lambda: folder.Download(self._instance_id, backup_id),
         )
         try:
             async with aiofiles.open(file_path, "rb") as file:
@@ -188,14 +178,17 @@ class ProtonDriveClient:
                     suggested_filename(backup),
                     json.dumps(backup.as_dict()),
                     str(f.name),
+                    max_tries=3,
+                    chunk_size_bytes=1 * 1024 * 1024 * 1024,  # 1 GB
                 ),
             )
 
-    async def delete_backup(self, link_id: str) -> None:
-        """Delete a Home Assistant backup using the Proton Drive link ID."""
+    async def delete_backup(self, backup_id: str) -> None:
+        """Delete a Home Assistant backup."""
+        folder = await self.__create_root_folder_if_needed()
         await self.__call_api(
             hass=self._hass,
-            call=lambda: self._client.DeleteFile(link_id),
+            call=lambda: folder.Delete(self._instance_id, backup_id),
         )
 
     async def list_backups(self) -> list[AgentBackup]:
