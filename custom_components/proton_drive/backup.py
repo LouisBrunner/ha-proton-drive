@@ -9,6 +9,7 @@ from homeassistant.components.backup import (
     BackupAgent,
     BackupAgentError,
     BackupNotFound,
+    OnProgressCallback,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
@@ -92,6 +93,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         *,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
+        on_progress: OnProgressCallback,
         **_kwargs: Any,
     ) -> None:
         """
@@ -99,7 +101,9 @@ class ProtonDriveBackupAgent(BackupAgent):
 
         :param open_stream: A function returning an async iterator that yields bytes.
         :param backup: Metadata about the backup that should be uploaded.
+        :param on_progress: A callback to report the number of uploaded bytes.
         """
+        _ = on_progress  # FIXME: not possible at the moment  # noqa: TD001,TD002,TD003
         try:
             await self._client.upload_backup(open_stream, backup)
         except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
