@@ -131,9 +131,7 @@ class ProtonDriveClient:
 
     async def list_shares(self) -> list[Share]:
         """List available share drives."""
-        return await self.__call_api(
-            hass=self._hass, call=lambda: self._client.ListShares()
-        )
+        return await self.__call_api(hass=self._hass, call=self._client.ListShares)
 
     async def __create_root_folder_if_needed(self) -> Folder:
         """Create the Home Assistant folder if it doesn't exist."""

@@ -81,11 +81,7 @@ def form_config_folders(
     *, share_id: str | None, root_folder: str | None, shares: list[Share] | None
 ) -> vol.Schema:
     """Create a form schema for the folders config step."""
-    fshares = (
-        shares
-        if shares
-        else [Share(Name="My files", ShareID=INTERNAL_DEFAULT_SHARE_ID)]
-    )
+    fshares = shares or [Share(Name="My files", ShareID=INTERNAL_DEFAULT_SHARE_ID)]
     return vol.Schema(
         {
             vol.Required(CONF_SHARE_ID, default=share_id): selector.SelectSelector(
