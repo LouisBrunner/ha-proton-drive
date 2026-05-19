@@ -5,19 +5,27 @@
         "description": "Enter your Proton account credentials",
         "data": {
           "email": "Email",
-          "password": "Password"
+          "password": "Password",
+          "mailbox_password": "Second password"
         }
       },
       "reauth_confirm": {
         "description": "You need to reauthenticate your Proton account",
         "data": {
-          "password": "Password"
+          "password": "Password",
+          "mailbox_password": "Second password"
         }
       },
       "mfa": {
         "title": "Enter your MFA code",
         "data": {
           "mfa_code": "MFA code (6-digits)"
+        }
+      },
+      "captcha": {
+        "title": "TODO: retrieval process",
+        "data": {
+          "captcha_token": "CAPTCHA Token"
         }
       },
       "folders": {

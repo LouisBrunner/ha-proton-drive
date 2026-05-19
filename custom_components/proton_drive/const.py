@@ -6,7 +6,9 @@ LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "proton_drive"
 
+CONF_TWO_PASSWORD = "mailbox_password"
 CONF_MFA_CODE = "mfa_code"
+CONF_CAPTCHA_TOKEN = "captcha_token"
 CONF_SHARE_ID = "share_id"
 CONF_ROOT_FOLDER = "root_folder"
 

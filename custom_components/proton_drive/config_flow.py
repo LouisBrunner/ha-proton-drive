@@ -14,12 +14,20 @@ from slugify import slugify
 
 from .api import (
     ProtonDriveAPIAuthenticationError,
+    ProtonDriveAPICaptchaError,
     ProtonDriveAPIConnectionError,
     ProtonDriveAPIError,
     ProtonDriveAPIMFAError,
     ProtonDriveClient,
 )
-from .const import CONF_MFA_CODE, CONF_ROOT_FOLDER, CONF_SHARE_ID, DOMAIN
+from .const import (
+    CONF_CAPTCHA_TOKEN,
+    CONF_MFA_CODE,
+    CONF_ROOT_FOLDER,
+    CONF_SHARE_ID,
+    CONF_TWO_PASSWORD,
+    DOMAIN,
+)
 from .helpers import create_credentials_from_data, serialize_credentials_to_data
 
 if TYPE_CHECKING:
@@ -46,6 +54,11 @@ def form_config_auth(*, email: str | None) -> vol.Schema:
                     autocomplete="current-password",
                 ),
             ),
+            vol.Optional(CONF_TWO_PASSWORD): selector.TextSelector(
+                selector.TextSelectorConfig(
+                    type=selector.TextSelectorType.PASSWORD,
+                ),
+            ),
         },
     )
 
@@ -60,6 +73,11 @@ def form_config_reauth() -> vol.Schema:
                     autocomplete="current-password",
                 ),
             ),
+            vol.Optional(CONF_TWO_PASSWORD): selector.TextSelector(
+                selector.TextSelectorConfig(
+                    type=selector.TextSelectorType.PASSWORD,
+                ),
+            ),
         },
     )
 
@@ -69,6 +87,19 @@ def form_config_mfa() -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_MFA_CODE): selector.TextSelector(
+                selector.TextSelectorConfig(
+                    type=selector.TextSelectorType.TEXT, autocomplete="one-time-code"
+                ),
+            ),
+        },
+    )
+
+
+def form_config_captcha() -> vol.Schema:
+    """Create a form schema for the captcha step."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_CAPTCHA_TOKEN): selector.TextSelector(
                 selector.TextSelectorConfig(
                     type=selector.TextSelectorType.TEXT, autocomplete="one-time-code"
                 ),
@@ -107,7 +138,9 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._email = None
         self._password = None
+        self._mailbox_password = None
         self._mfa_code = None
+        self._captcha_token = None
         self._share_id = None
         self._root_folder = None
 
@@ -135,11 +168,14 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._email = user_input[CONF_EMAIL]
             self._password = user_input[CONF_PASSWORD]
+            self._mailbox_password = user_input.get(CONF_MAILBOX_PASSWORD)
 
             try:
                 self._creds = await self.__authenticate(
                     email=self._email,
                     password=self._password,
+                    mailbox_password=self._mailbox_password,
+                    captcha_token=self._captcha_token,
                 )
                 return await self.__async_step_after_auth()
             except ProtonDriveAPIAuthenticationError as error:
@@ -150,6 +186,8 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 description_placeholders["error"] = str(error)
             except ProtonDriveAPIMFAError:
                 return await self.async_step_mfa()
+            except ProtonDriveAPICaptchaError:
+                return await self.async_step_captcha()
             except ProtonDriveAPIError as error:
                 errors["base"] = "unknown"
                 description_placeholders["error"] = str(error)
@@ -183,10 +221,17 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self._creds = await self.__authenticate(
                     email=self._email,
                     password=self._password,
+                    mailbox_password=self._mailbox_password,
                     mfa=self._mfa,
+                    captcha_token=self._captcha_token,
                 )
                 return await self.__async_step_after_auth()
-            except (ProtonDriveAPIAuthenticationError, ProtonDriveAPIMFAError) as error:
+            except ProtonDriveAPICaptchaError:
+                return await self.async_step_captcha()
+            except (
+                ProtonDriveAPIAuthenticationError,
+                ProtonDriveAPIMFAError,
+            ) as error:
                 errors["base"] = "invalid_auth"
                 description_placeholders["error"] = str(error)
                 return await self.async_step_auth(
@@ -204,6 +249,58 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="mfa",
             data_schema=form_config_mfa(),
+            errors=errors,
+            description_placeholders=description_placeholders,
+        )
+
+    async def async_step_captcha(
+        self, user_input: dict | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """
+        Ask user to resolve and provide a CAPTCHA token.
+
+        Optional, only required if the API asks for it.
+        """
+        errors, description_placeholders = {}, {}
+
+        if user_input is not None:
+            self._captcha_token = user_input[CONF_CAPTCHA_TOKEN]
+
+            assert self._email is not None
+            assert self._password is not None
+
+            try:
+                self._creds = await self.__authenticate(
+                    email=self._email,
+                    password=self._password,
+                    mailbox_password=self._mailbox_password,
+                    mfa=self._mfa,
+                    captcha_token=self._captcha_token,
+                )
+                return await self.__async_step_after_auth()
+            except ProtonDriveAPIMFAError:
+                return await self.async_step_mfa()
+            except (
+                ProtonDriveAPIAuthenticationError,
+                ProtonDriveAPICaptchaError,
+            ) as error:
+                errors["base"] = "invalid_auth"
+                description_placeholders["error"] = str(error)
+                return await self.async_step_auth(
+                    None,
+                    errors=errors,
+                    description_placeholders=description_placeholders,
+                )
+            except ProtonDriveAPIConnectionError as error:
+                errors["base"] = "cannot_connect"
+                description_placeholders["error"] = str(error)
+            except ProtonDriveAPIError as error:
+                errors["base"] = "unknown"
+                description_placeholders["error"] = str(error)
+
+        return self.async_show_form(
+            step_id="captcha",
+            data_schema=form_config_captcha(),
             errors=errors,
             description_placeholders=description_placeholders,
         )
@@ -289,11 +386,22 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_folders(user_input)
 
     async def __authenticate(
-        self, *, email: str, password: str, mfa: str | None = None
+        self,
+        *,
+        email: str,
+        password: str,
+        mailbox_password: str | None = None,
+        mfa: str | None = None,
+        captcha_token: str | None = None,
     ) -> Credentials:
         """Validate credentials."""
         return await ProtonDriveClient.login(
-            hass=self.hass, username=email, password=password, mfa=mfa
+            hass=self.hass,
+            username=email,
+            password=password,
+            mailbox_password=mailbox_password,
+            mfa=mfa,
+            captcha_token=captcha_token,
         )
 
     async def __finish(self) -> config_entries.ConfigFlowResult:

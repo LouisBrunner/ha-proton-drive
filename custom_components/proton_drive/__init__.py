@@ -20,6 +20,7 @@ from custom_components.proton_drive.const import (
 
 from .api import (
     ProtonDriveAPIAuthenticationError,
+    ProtonDriveAPICaptchaError,
     ProtonDriveAPIError,
     ProtonDriveAPIMFAError,
     ProtonDriveClient,
@@ -70,7 +71,11 @@ async def async_setup_entry(
             share_id=entry.data[CONF_SHARE_ID],
             update_creds=lambda creds: update_config(hass, entry, creds),
         )
-    except (ProtonDriveAPIAuthenticationError, ProtonDriveAPIMFAError) as e:
+    except (
+        ProtonDriveAPIAuthenticationError,
+        ProtonDriveAPIMFAError,
+        ProtonDriveAPICaptchaError,
+    ) as e:
         raise ConfigEntryAuthFailed from e
     except ProtonDriveAPIError as e:
         raise ConfigEntryNotReady from e
