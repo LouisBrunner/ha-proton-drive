@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers import instance_id, selector
-from proton.proton import Share
+from proton import Share
 from slugify import slugify
 
 from .api import (
@@ -33,7 +33,7 @@ from .helpers import create_credentials_from_data, serialize_credentials_to_data
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from proton.proton import Credentials
+    from proton import Credentials
 
 
 INTERNAL_DEFAULT_SHARE_ID = "why-dont-you-accept-empty-strings"
@@ -112,14 +112,16 @@ def form_config_folders(
     *, share_id: str | None, root_folder: str | None, shares: list[Share] | None
 ) -> vol.Schema:
     """Create a form schema for the folders config step."""
-    fshares = shares or [Share(Name="My files", ShareID=INTERNAL_DEFAULT_SHARE_ID)]
+    fshares = shares or [Share(name="My files", share_id=INTERNAL_DEFAULT_SHARE_ID)]
     return vol.Schema(
         {
             vol.Required(CONF_SHARE_ID, default=share_id): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     mode=selector.SelectSelectorMode.DROPDOWN,
                     options=[
-                        selector.SelectOptionDict(label=share.Name, value=share.ShareID)
+                        selector.SelectOptionDict(
+                            label=share.name, value=share.share_id
+                        )
                         for share in fshares
                     ],
                 ),
@@ -139,7 +141,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._email = None
         self._password = None
         self._mailbox_password = None
-        self._mfa_code = None
+        self._mfa = None
         self._captcha_token = None
         self._share_id = None
         self._root_folder = None
@@ -168,7 +170,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._email = user_input[CONF_EMAIL]
             self._password = user_input[CONF_PASSWORD]
-            self._mailbox_password = user_input.get(CONF_MAILBOX_PASSWORD)
+            self._mailbox_password = user_input.get(CONF_TWO_PASSWORD)
 
             try:
                 self._creds = await self.__authenticate(

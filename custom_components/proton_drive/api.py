@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Self
 import aiofiles
 import aiofiles.os
 import aiofiles.tempfile
-import proton.proton
+import proton
 from homeassistant.components.backup import AgentBackup
 from homeassistant.components.backup.util import suggested_filename
 
@@ -130,10 +130,9 @@ class ProtonDriveClient:
             self._client = proton.Client(
                 creds=creds,
                 on_auth_change=update_creds,
+                share_id=share_id if share_id != "" else None,
                 log_level=ProtonDriveClient._get_log_level(),
             )
-            if share_id != "":
-                self._client.select_share(share_id)
         self._folder = base_folder
 
         # can't use /tmp as backups might be bigger than RAM: https://github.com/LouisBrunner/ha-proton-drive/issues/47
@@ -147,7 +146,7 @@ class ProtonDriveClient:
     async def __create_root_folder_if_needed(self) -> proton.Folder:
         """Create the Home Assistant folder if it doesn't exist."""
         return await self.__call_api(
-            hass=self._hass, call=lambda: self._client.MakeRootFolder(self._folder)
+            hass=self._hass, call=lambda: self._client.make_root_folder(self._folder)
         )
 
     async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:

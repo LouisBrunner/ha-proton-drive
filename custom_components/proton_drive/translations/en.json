@@ -6,14 +6,14 @@
         "data": {
           "email": "Email",
           "password": "Password",
-          "mailbox_password": "Second password"
+          "mailbox_password": "Mailbox password"
         }
       },
       "reauth_confirm": {
         "description": "You need to reauthenticate your Proton account",
         "data": {
           "password": "Password",
-          "mailbox_password": "Second password"
+          "mailbox_password": "Mailbox password"
         }
       },
       "mfa": {

@@ -30,7 +30,7 @@ from .helpers import create_credentials_from_data, serialize_credentials_to_data
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from proton.proton import Credentials
+    from proton import Credentials
 
     from .data import ProtonDriveConfigEntry
 

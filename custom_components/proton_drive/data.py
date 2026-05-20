@@ -15,9 +15,6 @@ if TYPE_CHECKING:
 
     from homeassistant.config_entries import ConfigEntry
 
-    from .api import ProtonDriveClient
-    from .data import ProtonDriveConfigEntry
-
 
 DATA_BACKUP_AGENT_LISTENERS: HassKey[list[Callable[[], None]]] = HassKey(
     f"{DOMAIN}.backup_agent_listeners"
