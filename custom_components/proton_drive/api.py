@@ -240,4 +240,4 @@ class ProtonDriveClient:
     @classmethod
     def _get_log_level(cls) -> str:
         """Get log level."""
-        return "debug" if LOGGER.level == logging.DEBUG else "info"
+        return "debug" if LOGGER.isEnabledFor(logging.DEBUG) else "info"
