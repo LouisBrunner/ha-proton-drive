@@ -83,7 +83,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         """
         LOGGER.debug("Downloading backup_id: %s", backup_id)
         try:
-            return await self._client.download_backup(backup_id)
+            return self._client.download_backup(backup_id)
         except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to download backup: {err}"
             raise BackupAgentError(msg) from err
