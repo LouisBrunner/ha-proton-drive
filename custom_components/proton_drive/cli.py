@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import os
 import platform
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,7 +15,6 @@ import aiofiles
 import aiofiles.os
 import aiofiles.ospath
 import aiohttp
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CLI_CHECKSUMS, CLI_DOWNLOAD_BASE, CLI_VERSION, DOMAIN, LOGGER
 
@@ -84,7 +84,7 @@ class ProtonCLI:
         return arch
 
     @classmethod
-    async def __download(cls, hass: HomeAssistant, dest: Path) -> None:
+    async def __download(cls, _hass: HomeAssistant, dest: Path) -> None:
         arch = cls.__get_arch()
         url = f"{CLI_DOWNLOAD_BASE}/{CLI_VERSION}/linux-{arch}/proton-drive"
         LOGGER.info("Downloading Proton Drive CLI v%s from %s", CLI_VERSION, url)
@@ -93,14 +93,16 @@ class ProtonCLI:
 
         tmp_path = dest.with_suffix(".tmp")
 
-        session = async_get_clientsession(hass)
+        connector = aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver())
         try:
-            async with session.get(url) as resp:
+            async with aiohttp.ClientSession(connector=connector) as session, session.get(url) as resp:
                 resp.raise_for_status()
+                LOGGER.debug("Success, starting download to %s", tmp_path)
 
                 try:
                     async with aiofiles.open(tmp_path, "wb") as f:
                         async for chunk in resp.content.iter_chunked(65536):
+                            LOGGER.debug("Writing %d bytes to %s", len(chunk), tmp_path)
                             await f.write(chunk)
                 except Exception as e:
                     if await aiofiles.ospath.exists(tmp_path):
@@ -112,16 +114,13 @@ class ProtonCLI:
             raise DownloadCLIError(msg) from e
 
         try:
-            aiofiles.os.chmod(tmp_path, 0o755)
+            tmp_path.chmod(0o755)
             cls.__verify_checksum(tmp_path, arch)
             await aiofiles.os.rename(tmp_path, dest)
-        except Exception as e:
+        except Exception:
             if await aiofiles.ospath.exists(tmp_path):
                 await aiofiles.os.unlink(tmp_path)
-            if e is UnsupportedPlatformError:
-                raise
-            msg = "Failed to verify Proton Drive CLI checksum"
-            raise DownloadCLIError(msg) from e
+            raise
 
         LOGGER.info("Proton Drive CLI downloaded to %s", dest)
 
@@ -135,25 +134,19 @@ class ProtonCLI:
         digest = hashlib.sha512(path.read_bytes()).hexdigest()
         if digest != expected:
             msg = f"Checksum mismatch for {path.name}, expected {expected}, got {digest}"
-            raise RuntimeError(msg)
+            raise DownloadCLIError(msg)
 
     async def __run(self, *args: str, wd: str | None = None) -> Process:
         argv = list(args)
         argv.append("--json")
 
-        LOGGER.debug(
-            "Running: %s %s (%v)",
-            self.__path,
-            " ".join(argv),
-            {
-                "wd": wd,
-            },
-        )
+        LOGGER.debug("Running: %s %s (wd=%s)", self.__path, " ".join(argv), wd)
 
         return await asyncio.create_subprocess_exec(
             self.__path,
             *argv,
             cwd=wd,
+            env={**os.environ, "PROTON_DRIVE_UNSAFE_SECRETS": "true"},
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -166,7 +159,7 @@ class ProtonCLI:
             raise InvalidOutputError(msg)
         if folder == "/":
             return [file.path for file in files]
-        return [file.path.value for file in files]
+        return [file.name.value for file in files]
 
     async def run(self, *args: str) -> Any:
         """Run a CLI command and return the parsed JSON output."""
@@ -174,10 +167,12 @@ class ProtonCLI:
 
         stdout, stderr = await proc.communicate()
 
-        return self.__process_run(proc, stdout, stderr)
+        return self._process_run(proc, stdout, stderr)
 
     @classmethod
-    def __process_run(cls, proc: Process, stdout: bytes, stderr: bytes) -> Any:
+    def _process_run(cls, proc: Process, stdout: bytes, stderr: bytes) -> Any:
+        LOGGER.debug("CLI Result %d: stdout=%s, stderr=%s", proc.returncode, stdout.decode(), stderr.decode())
+
         if proc.returncode != 0:
             msg = stderr.decode()
             if "Node not found" in msg:
@@ -191,14 +186,10 @@ class ProtonCLI:
             return None
 
         try:
-            res = json.loads(json_output)
+            return json.loads(json_output, object_hook=lambda d: SimpleNamespace(**d))
         except json.JSONDecodeError as e:
             msg = f"Failed to parse JSON output from CLI: {json_output}"
             raise InvalidOutputError(msg) from e
-        else:
-            if isinstance(res, dict):
-                return SimpleNamespace(**res)
-            return res
 
     class AuthFlow:
         """Represents an authentication flow."""
@@ -255,7 +246,7 @@ class ProtonCLI:
             await proc.wait()
 
             try:
-                res = ProtonCLI.__process_run(proc, stdout_res, stderr_res)
+                res = ProtonCLI._process_run(proc, stdout_res, stderr_res)
                 fut.set_result(res)
             except CLIError as e:
                 fut.set_exception(e)

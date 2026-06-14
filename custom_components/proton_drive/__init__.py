@@ -45,7 +45,7 @@ async def async_setup_entry(
         raise ConfigEntryNotReady(str(e)) from e
 
     try:
-        client = ProtonDriveClient(
+        client = await ProtonDriveClient.create(
             hass=hass,
             cli=cli,
             instance_id=await instance_id.async_get(hass),

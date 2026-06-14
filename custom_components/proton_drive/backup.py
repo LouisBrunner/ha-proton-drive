@@ -12,9 +12,9 @@ from homeassistant.components.backup import (
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from slugify import slugify
 
-from .api import ProtonDriveAPIError
+from .api import ProtonDriveError
+from .cli import CLIError
 from .const import DOMAIN, LOGGER, OnProgressCallback
 from .data import DATA_BACKUP_AGENT_LISTENERS, ProtonDriveConfigEntry
 
@@ -59,13 +59,12 @@ class ProtonDriveBackupAgent(BackupAgent):
     """Proton Drive backup agent."""
 
     domain = DOMAIN
+    unique_id = DOMAIN
 
     def __init__(self, config_entry: ProtonDriveConfigEntry) -> None:
         """Initialize the cloud backup sync agent."""
         super().__init__()
-        assert config_entry.unique_id  # noqa: S101
         self.name = config_entry.title
-        self.unique_id = slugify(config_entry.unique_id)
         self._client = config_entry.runtime_data.client
 
     async def async_download_backup(
@@ -84,7 +83,7 @@ class ProtonDriveBackupAgent(BackupAgent):
             # Do not await! We want to return it as-is so the caller can safely read the iterator
             # otherwise the file will be deleted before the caller can read the data.
             return self._client.download_backup(backup_id)
-        except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
+        except (ProtonDriveError, CLIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to download backup: {err}"
             raise BackupAgentError(msg) from err
 
@@ -105,7 +104,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         """
         try:
             await self._client.upload_backup(open_stream, backup, on_progress=on_progress)
-        except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
+        except (ProtonDriveError, CLIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to upload backup: {err}"
             raise BackupAgentError(msg) from err
 
@@ -123,7 +122,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         try:
             await self._client.delete_backup(backup_id)
             LOGGER.debug("Deleted backup_id: %s", backup_id)
-        except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
+        except (ProtonDriveError, CLIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to delete backup: {err}"
             raise BackupAgentError(msg) from err
 
@@ -131,7 +130,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         """List backups."""
         try:
             return await self._client.list_backups()
-        except (ProtonDriveAPIError, HomeAssistantError, TimeoutError) as err:
+        except (ProtonDriveError, CLIError, HomeAssistantError, TimeoutError) as err:
             msg = f"Failed to list backups: {err}"
             raise BackupAgentError(msg) from err
 

@@ -13,12 +13,11 @@ import aiofiles.os
 from homeassistant.components.backup import AgentBackup
 from homeassistant.components.backup.util import suggested_filename
 
-from custom_components.proton_drive.cli import (
+from .cli import (
     CLIError,
     NodeNotFoundError,
     ProtonCLI,
 )
-
 from .const import LOGGER, OnProgressCallback
 
 if TYPE_CHECKING:
@@ -31,11 +30,11 @@ class ProtonDriveError(Exception):
     """Exception to indicate a general error."""
 
 
-class ProtonDriveInvalidBackupError(Exception):
+class ProtonDriveInvalidBackupError(ProtonDriveError):
     """Exception to indicate a backup has an invalid format."""
 
 
-class ProtonDriveMissingBackupError(Exception):
+class ProtonDriveMissingBackupError(ProtonDriveError):
     """Exception to indicate a backup is missing."""
 
 
@@ -102,7 +101,6 @@ class ProtonDriveClient:
         backup_folder: str,
     ) -> None:
         """Use `await ProtonDriveClient.create(...)` to create an instance of this class."""
-        self.__hass = hass
         self.__cli = cli
         self.__instance_id = instance_id
         self.__backup_folder = Path(backup_folder)
@@ -282,7 +280,7 @@ class ProtonDriveClient:
                     else:
                         all_metadata.append(AgentBackup.from_dict(metadata))
                 except CLIError:
-                    LOGGER.exception("Failed to read metadata %s: %s", filename)
+                    LOGGER.exception("Failed to read metadata %s", filename)
 
         return all_metadata
 
