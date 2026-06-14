@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from homeassistant.util.hass_dict import HassKey
 
-from .api import ProtonDriveClient
 from .const import DOMAIN
 
 if TYPE_CHECKING:
@@ -15,10 +14,10 @@ if TYPE_CHECKING:
 
     from homeassistant.config_entries import ConfigEntry
 
+    from .api import ProtonDriveClient
 
-DATA_BACKUP_AGENT_LISTENERS: HassKey[list[Callable[[], None]]] = HassKey(
-    f"{DOMAIN}.backup_agent_listeners"
-)
+
+DATA_BACKUP_AGENT_LISTENERS: HassKey[list[Callable[[], None]]] = HassKey(f"{DOMAIN}.backup_agent_listeners")
 
 type ProtonDriveConfigEntry = ConfigEntry[ProtonDriveData]
 

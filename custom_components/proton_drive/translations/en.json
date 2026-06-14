@@ -1,45 +1,32 @@
 {
   "config": {
     "step": {
-      "auth": {
-        "description": "Enter your Proton account credentials",
+      "user": {
+        "title": "Sign in to Proton Drive",
+        "description": "Please open the following link in your browser: {url}\nOnce you are done, click `Submit`"
+      },
+      "backup_folder": {
+        "title": "Where to store the backups",
         "data": {
-          "email": "Email",
-          "password": "Password",
-          "mailbox_password": "Mailbox password"
+          "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
         }
       },
       "reauth_confirm": {
-        "description": "You need to reauthenticate your Proton account",
-        "data": {
-          "password": "Password",
-          "mailbox_password": "Mailbox password"
-        }
+        "title": "Re-authenticate with Proton Drive",
+        "description": "Please open the following link in your browser: {url}\nOnce you are done, click `Submit`"
       },
-      "mfa": {
-        "title": "Enter your MFA code",
-        "data": {
-          "mfa_code": "MFA code (6-digits)"
-        }
-      },
-      "captcha": {
-        "title": "TODO: retrieval process",
-        "data": {
-          "captcha_token": "CAPTCHA Token"
-        }
-      },
-      "folders": {
+      "reconfigure": {
         "title": "Where to store the backups",
         "data": {
-          "share_id": "Drive",
-          "root_folder": "Folder, e.g. Back/HASS, leave empty for root"
+          "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
         }
       }
     },
     "error": {
-      "cannot_connect": "Could not connect to Proton API: {error}",
-      "invalid_auth": "Failed to authenticate to Proton API: {error}",
-      "unknown": "Unknown Proton API error: {error}"
+      "cli_failed": "Failed to start the Proton Drive CLI: {error}",
+      "cannot_auth": "Failed to start authentication flow: {error}",
+      "failed_auth": "Failed to authenticate: {error}",
+      "pending_auth": "Authentication still in progress, `Submit` once you have completed the authentication flow or wait a few seconds before `Submit`ting again"
     },
     "abort": {
       "already_configured": "This integration has already been configured",

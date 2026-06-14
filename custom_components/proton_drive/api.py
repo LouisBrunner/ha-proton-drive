@@ -3,241 +3,328 @@
 from __future__ import annotations
 
 import json
-import logging
-from contextlib import (
-    AsyncContextDecorator,
-    ContextDecorator,
-)
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 
 import aiofiles
 import aiofiles.os
-import aiofiles.tempfile
-import proton
 from homeassistant.components.backup import AgentBackup
 from homeassistant.components.backup.util import suggested_filename
 
-from .const import LOGGER
+from custom_components.proton_drive.cli import (
+    CLIError,
+    NodeNotFoundError,
+    ProtonCLI,
+)
+
+from .const import LOGGER, OnProgressCallback
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Callable, Coroutine
-    from types import TracebackType
+    from collections.abc import AsyncGenerator, AsyncIterator, Callable, Coroutine
 
     from homeassistant.core import HomeAssistant
 
 
-class ProtonDriveAPIError(Exception):
-    """Exception to indicate a general API error."""
+class ProtonDriveError(Exception):
+    """Exception to indicate a general error."""
 
 
-class ProtonDriveAPIConnectionError(
-    ProtonDriveAPIError,
-):
-    """Exception to indicate a communication error."""
+class ProtonDriveInvalidBackupError(Exception):
+    """Exception to indicate a backup has an invalid format."""
 
 
-class ProtonDriveAPIAuthenticationError(
-    ProtonDriveAPIError,
-):
-    """Exception to indicate an authentication error."""
+class ProtonDriveMissingBackupError(Exception):
+    """Exception to indicate a backup is missing."""
 
 
-class ProtonDriveAPIMFAError(
-    ProtonDriveAPIError,
-):
-    """Exception to indicate a multi-factor authentication error."""
+@dataclass
+class Metadata:
+    """Class to represent backup metadata."""
 
+    proton_drive_version: str
+    instance_id: str
+    backup_id: str
+    base_name: str
+    metadata: dict  # AgentBackup.as_dict()
+    chunks: int
 
-class ProtonDriveAPICaptchaError(
-    ProtonDriveAPIError,
-):
-    """Exception to indicate a CAPTCHA error."""
+    @classmethod
+    def is_valid(cls, data: dict) -> bool:
+        """Check if the given JSON string is valid metadata."""
+        ver = data.get("proton_drive_version")
+        return ver == "1.0.0"
 
+    @classmethod
+    def load(cls, data: dict) -> Metadata | dict:
+        """
+        Load metadata from a JSON string.
 
-class _ErrorCatcher(ContextDecorator, AsyncContextDecorator):
-    def __enter__(self) -> Self:
-        """Enter the context manager."""
-        return self
+        It can either be a new style one with added info and chunking or older type.
+        """
+        if not cls.is_valid(data):
+            return data
+        return cls(
+            proton_drive_version=data["proton_drive_version"],
+            instance_id=data["instance_id"],
+            backup_id=data["backup_id"],
+            base_name=data["base_name"],
+            metadata=data["metadata"],
+            chunks=data["chunks"],
+        )
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Exit the context manager."""
-        return self.__handle_exceptions(exc_type, exc_val, exc_tb)
-
-    async def __aenter__(self) -> Self:
-        """Enter the context manager."""
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        """Exit the context manager."""
-        return self.__handle_exceptions(exc_type, exc_val, exc_tb)
-
-    def __handle_exceptions(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        _exc_tb: TracebackType | None,
-    ) -> bool:
-        if exc_type is None or not issubclass(exc_type, RuntimeError):
-            return False
-        LOGGER.exception("proton API call failed")
-        e = exc_val
-        if "Code=9001" in str(e) or "2fa code is required" in str(e):
-            if "please complete CAPTCHA" in str(e):
-                msg = f"CAPTCHA Error: {e}"
-                raise ProtonDriveAPICaptchaError(msg) from e
-            msg = f"MFA Error: {e}"
-            raise ProtonDriveAPIMFAError(msg) from e
-        if "Code=8002" in str(e) or "Code=10013" in str(e):
-            msg = f"Authentication Error: {e}"
-            raise ProtonDriveAPIAuthenticationError(msg) from e
-        msg = f"API Error: {e}"
-        raise ProtonDriveAPIError(msg) from e
+    def as_dict(self) -> dict:
+        """Return the metadata as a dictionary."""
+        return {
+            "proton_drive_version": self.proton_drive_version,
+            "instance_id": self.instance_id,
+            "backup_id": self.backup_id,
+            "base_name": self.base_name,
+            "metadata": self.metadata,
+            "chunks": self.chunks,
+        }
 
 
 class ProtonDriveClient:
     """Client for the Proton Drive API."""
 
-    @classmethod
-    def configure_logger(cls) -> None:
-        """Configure the Proton Drive logger."""
-        proton.configure_logger(LOGGER)
+    METADATA_EXT = ".metadata.json"
+    ARCHIVE_EXT = ".tar"
+    PART_EXT = f"{ARCHIVE_EXT}.part"
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         hass: HomeAssistant,
+        cli: ProtonCLI,
         instance_id: str,
-        creds: proton.Credentials,
-        base_folder: str,
-        share_id: str,
-        update_creds: Callable[[proton.Credentials], None],
+        backup_folder: str,
     ) -> None:
-        """Client for the Proton Drive API."""
-        self._hass = hass
-        self._instance_id = instance_id
-        with _ErrorCatcher():
-            self._client = proton.Client(
-                creds=creds,
-                on_auth_change=update_creds,
-                share_id=share_id if share_id != "" else None,
-                log_level=ProtonDriveClient._get_log_level(),
+        """Use `await ProtonDriveClient.create(...)` to create an instance of this class."""
+        self.__hass = hass
+        self.__cli = cli
+        self.__instance_id = instance_id
+        self.__backup_folder = Path(backup_folder)
+        self.__temp_backup_dir = Path(hass.config.path("tmp_backups"))
+
+    @classmethod
+    async def create(
+        cls,
+        *,
+        hass: HomeAssistant,
+        cli: ProtonCLI,
+        instance_id: str,
+        backup_folder: str,
+    ) -> ProtonDriveClient:
+        """Create and initialize a ProtonDriveClient instance."""
+        me = cls(hass=hass, cli=cli, instance_id=instance_id, backup_folder=backup_folder)
+        await me.__prepare()
+        return me
+
+    async def __prepare(self) -> None:
+        try:
+            await self.__cli.run("filesystem", "info", str(self.__backup_folder))
+        except NodeNotFoundError:
+            LOGGER.exception("Backup folder not found, trying to create")
+            await self.__cli.run(
+                "filesystem",
+                "create-folder",
+                str(self.__backup_folder.parent),
+                self.__backup_folder.name,
             )
-        self._folder = base_folder
-
-        # can't use /tmp as backups might be bigger than RAM: https://github.com/LouisBrunner/ha-proton-drive/issues/47
-        # same as Core: https://github.com/home-assistant/core/blob/4fdbe82df23113ea811e5095b844c3f927817b53/homeassistant/components/backup/manager.py#L1646
-        self.__temp_backup_dir = Path(self._hass.config.path("tmp_backups"))
-
-    async def list_shares(self) -> list[proton.Share]:
-        """List available share drives."""
-        return await self.__call_api(hass=self._hass, call=self._client.list_shares)
-
-    async def __create_root_folder_if_needed(self) -> proton.Folder:
-        """Create the Home Assistant folder if it doesn't exist."""
-        return await self.__call_api(
-            hass=self._hass, call=lambda: self._client.make_root_folder(self._folder)
-        )
+        await aiofiles.os.makedirs(self.__temp_backup_dir, exist_ok=True)
 
     async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:
         """Download a Home Assistant backup."""
-        folder = await self.__create_root_folder_if_needed()
-        file_path = await self.__call_api(
-            hass=self._hass,
-            call=lambda: folder.download(self._instance_id, backup_id),
-        )
-        try:
-            async with aiofiles.open(file_path, "rb") as file:
-                while chunk := await file.read(4096):
-                    yield chunk
-        finally:
-            await aiofiles.os.remove(file_path)
+        metadata_suffix = self.__make_metadata_path("", backup_id)
+
+        metadata_file = None
+        files = await self.__cli.list_files(str(self.__backup_folder))
+        for filename in files:
+            if filename.endswith(metadata_suffix):
+                metadata_file = filename
+                break
+
+        if metadata_file is None:
+            msg = f"Metadata file not found for backup_id: {backup_id}"
+            raise ProtonDriveMissingBackupError(msg)
+
+        metadata = await self.__read_metadata(metadata_file)
+
+        if metadata is not Metadata or metadata.chunks <= 1:
+            name = (
+                self.__make_backup_path(metadata.base_name, backup_id)
+                if metadata is Metadata
+                else f"${metadata_file.removesuffix(self.METADATA_EXT)}{self.ARCHIVE_EXT}"
+            )
+            async with aiofiles.tempfile.NamedTemporaryFile(dir=self.__temp_backup_dir) as f:
+                await self.__cli.run(
+                    "filesystem",
+                    "download",
+                    self.__make_filepath(name),
+                    str(f.name),
+                )
+                async with aiofiles.open(f.name, "rb") as file:
+                    while chunk := await file.read(4096):
+                        yield chunk
+        else:
+            for i in range(metadata.chunks):
+                name = self.__make_chunk_path(metadata.base_name, backup_id, i)
+                async with aiofiles.tempfile.NamedTemporaryFile(dir=self.__temp_backup_dir) as f:
+                    await self.__cli.run(
+                        "filesystem",
+                        "download",
+                        self.__make_filepath(name),
+                        str(f.name),
+                    )
+                    async with aiofiles.open(f.name, "rb") as file:
+                        while chunk := await file.read(4096):
+                            yield chunk
 
     async def upload_backup(
         self,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
+        on_progress: OnProgressCallback | None = None,
     ) -> None:
         """Upload a Home Assistant backup."""
-        folder = await self.__create_root_folder_if_needed()
-        self.__temp_backup_dir.mkdir(exist_ok=True)
-        async with aiofiles.tempfile.NamedTemporaryFile(
-            dir=self.__temp_backup_dir
-        ) as f:
-            async for chunk in await open_stream():
-                await f.write(chunk)
+        archive_name = suggested_filename(backup)
+        base_name = archive_name.removesuffix(self.ARCHIVE_EXT)
+        metadata_name = f"{base_name}{self.METADATA_EXT}"
+
+        # TODO: no chunking, no retries, do we still need to do that or will the CLI be stable enough?
+
+        # TODO: not counting the metadata in the progress
+        async with self.__open_temp(metadata_name, "w") as f:
+            await f.write(
+                json.dumps(
+                    Metadata(
+                        proton_drive_version="1.0.0",
+                        instance_id=self.__instance_id,
+                        backup_id=backup.backup_id,
+                        base_name=base_name,
+                        metadata=backup.as_dict(),
+                        chunks=1,
+                    ).as_dict()
+                ).encode("utf-8")
+            )
             await f.flush()
 
-            await self.__call_api(
-                hass=self._hass,
-                call=lambda: folder.upload(
-                    self._instance_id,
-                    backup.backup_id,
-                    name=suggested_filename(backup),
-                    metadata_json=json.dumps(backup.as_dict()),
-                    content_path=str(f.name),
-                    max_tries=3,
-                    chunk_size_bytes=1 * 1024 * 1024 * 1024,  # 1 GB
-                ),
+            await self.__cli.run(
+                "filesystem",
+                "upload",
+                str(f.name),
+                str(self.__backup_folder),
             )
+
+        async with self.__open_temp(archive_name, "wb") as f:
+            async for chunk in await open_stream():
+                await f.write(chunk)
+                if on_progress is not None:
+                    on_progress(bytes_uploaded=await f.tell() // 2)
+            size = await f.tell()
+            await f.flush()
+
+            # TODO: upload progress feedback is missing
+            await self.__cli.run(
+                "filesystem",
+                "upload",
+                str(f.name),
+                str(self.__backup_folder),
+            )
+            if on_progress is not None:
+                on_progress(bytes_uploaded=size)
 
     async def delete_backup(self, backup_id: str) -> None:
         """Delete a Home Assistant backup."""
-        folder = await self.__create_root_folder_if_needed()
-        await self.__call_api(
-            hass=self._hass,
-            call=lambda: folder.delete(self._instance_id, backup_id),
-        )
+        metadata_suffix = self.__make_metadata_path("", backup_id)
+        archive_suffix = self.__make_backup_path("", backup_id)
+
+        metadata_file = None
+        to_delete = []
+
+        files = await self.__cli.list_files(str(self.__backup_folder))
+        for filename in files:
+            if filename.endswith(metadata_suffix):
+                metadata_file = filename
+                to_delete.append(filename)
+            elif filename.endswith(archive_suffix):
+                to_delete.append(filename)
+
+        if metadata_file is None:
+            LOGGER.warning("Metadata file not found for backup_id: %s", backup_id)
+        else:
+            metadata = self.__read_metadata(metadata_file)
+            if metadata is Metadata:
+                if metadata.chunks > 1:
+                    to_delete.extend(
+                        self.__make_chunk_path(metadata.base_name, backup_id, i) for i in range(metadata.chunks)
+                    )
+                else:
+                    to_delete.append(self.__make_backup_path(metadata.base_name, backup_id))
+
+        await self.__cli.run("filesystem", "trash", *[self.__make_filepath(f) for f in to_delete])
 
     async def list_backups(self) -> list[AgentBackup]:
         """List Home Assistant backups."""
-        folder = await self.__create_root_folder_if_needed()
-        metadatas = await self.__call_api(
-            hass=self._hass,
-            call=lambda: folder.list_files_metadata(self._instance_id),
-        )
-        return [AgentBackup.from_dict(json.loads(metadata)) for metadata in metadatas]
+        files = await self.__cli.list_files(str(self.__backup_folder))
 
-    @classmethod
-    async def __call_api(cls, *, hass: HomeAssistant, call: Callable[[], Any]) -> Any:
-        async with _ErrorCatcher():
-            return await hass.async_add_executor_job(call)
+        metadata_suffix = self.__make_metadata_path("", "")
 
-    @classmethod
-    async def login(  # noqa: PLR0913
-        cls,
-        *,
-        hass: HomeAssistant,
-        username: str,
-        password: str,
-        mailbox_password: str | None = None,
-        mfa: str | None = None,
-        captcha_token: str | None = None,
-    ) -> proton.Credentials:
-        """Get credentials from."""
-        return await cls.__call_api(
-            hass=hass,
-            call=lambda: proton.login(
-                username=username,
-                password=password,
-                mailbox_password=mailbox_password,
-                mfa=mfa,
-                captcha_token=captcha_token,
-                log_level=cls._get_log_level(),
-            ),
-        )
+        all_metadata = []
+        for filename in files:
+            if filename.endswith(metadata_suffix):
+                try:
+                    metadata = await self.__read_metadata(filename)
+                    if isinstance(metadata, Metadata):
+                        all_metadata.append(AgentBackup.from_dict(metadata.metadata))
+                    else:
+                        all_metadata.append(AgentBackup.from_dict(metadata))
+                except CLIError:
+                    LOGGER.exception("Failed to read metadata %s: %s", filename)
 
-    @classmethod
-    def _get_log_level(cls) -> str:
-        """Get log level."""
-        return "debug" if LOGGER.isEnabledFor(logging.DEBUG) else "info"
+        return all_metadata
+
+    async def __read_metadata(self, metadata_file: str) -> Metadata | dict:
+        async with aiofiles.tempfile.NamedTemporaryFile(dir=self.__temp_backup_dir) as f:
+            await self.__cli.run(
+                "filesystem",
+                "download",
+                self.__make_filepath(metadata_file),
+                str(f.name),
+            )
+            data = await f.read()
+            try:
+                json_data = json.loads(data)
+            except json.JSONDecodeError as e:
+                LOGGER.exception("Failed to parse metadata JSON: %s", data)
+                msg = "Failed to parse metadata JSON"
+                raise ProtonDriveInvalidBackupError(msg) from e
+            return Metadata.load(json_data)
+
+    def __make_metadata_path(self, base: str, backup_id: str) -> str:
+        return self.__make_path(base, backup_id, self.METADATA_EXT[1:])
+
+    def __make_backup_path(self, base: str, backup_id: str) -> str:
+        return self.__make_path(base, backup_id, self.ARCHIVE_EXT[1:])
+
+    def __make_chunk_path(self, base: str, backup_id: str, chunk: int) -> str:
+        return self.__make_path(base, backup_id, f"{chunk:02d}{self.PART_EXT}")
+
+    def __make_path(self, base: str, backup_id: str, suffix: str) -> str:
+        return f"{base}{backup_id}-{self.__instance_id}.{suffix}"
+
+    def __make_filepath(self, filename: str) -> str:
+        return str(self.__backup_folder / filename)
+
+    @asynccontextmanager
+    async def __open_temp(
+        self, filename: str, mode: str
+    ) -> AsyncGenerator[aiofiles.threadpool.binary.AsyncBufferedIOBase]:
+        file = await aiofiles.open(self.__temp_backup_dir / filename, mode)
+        try:
+            yield file
+        finally:
+            await file.close()
+            await aiofiles.os.remove(file.name)
