@@ -214,7 +214,7 @@ class ProtonCLI:
         if path.is_relative_to("/my-files"):
             return "/my-files"
         parts = Path(path).parts
-        if len(parts) < 3:
+        if len(parts) < 3:  # noqa: PLR2004
             msg = f"Invalid path: {path}"
             raise ValueError(msg)
         return f"/{parts[1]}/{parts[2]}"
