@@ -7,9 +7,11 @@ import hashlib
 import json
 import os
 import platform
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 import aiofiles
 import aiofiles.os
@@ -55,9 +57,14 @@ class AuthError(CLIError):
 class ProtonCLI:
     """Wrapper for the Proton Drive CLI binary."""
 
+    API_RESPONSE_SUCCESS = 1000
+
     def __init__(self, hass: HomeAssistant) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
-        self.__path = hass.config.path(DOMAIN, "proton-drive")
+        self.__xdg = hass.config.path(".cache", DOMAIN, "xdg")
+        self.__path = hass.config.path(
+            ".cache", DOMAIN, f"proton-drive-{CLI_VERSION}"
+        )  # FIXME: use cache_path when targeting later HA
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
@@ -93,9 +100,8 @@ class ProtonCLI:
 
         tmp_path = dest.with_suffix(".tmp")
 
-        connector = aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver())
         try:
-            async with aiohttp.ClientSession(connector=connector) as session, session.get(url) as resp:
+            async with cls.__http_session() as session, session.get(url) as resp:
                 resp.raise_for_status()
                 LOGGER.debug("Success, starting download to %s", tmp_path)
 
@@ -115,7 +121,7 @@ class ProtonCLI:
 
         try:
             tmp_path.chmod(0o755)
-            cls.__verify_checksum(tmp_path, arch)
+            await cls.__verify_checksum(tmp_path, arch)
             await aiofiles.os.rename(tmp_path, dest)
         except Exception:
             if await aiofiles.ospath.exists(tmp_path):
@@ -125,35 +131,64 @@ class ProtonCLI:
         LOGGER.info("Proton Drive CLI downloaded to %s", dest)
 
     @classmethod
-    def __verify_checksum(cls, path: Path, arch: str) -> None:
+    def __http_session(cls) -> aiohttp.ClientSession:
+        connector = aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver())
+        return aiohttp.ClientSession(connector=connector)
+
+    @classmethod
+    async def __verify_checksum(cls, path: Path, arch: str) -> None:
         expected = CLI_CHECKSUMS.get(arch)
         if expected is None:
             msg = f"No checksum available for architecture: {arch}"
             raise UnsupportedPlatformError(msg)
 
-        digest = hashlib.sha512(path.read_bytes()).hexdigest()
+        async with aiofiles.open(path, "rb") as f:
+            data = await f.read()
+
+        digest = hashlib.sha512(data).hexdigest()
         if digest != expected:
             msg = f"Checksum mismatch for {path.name}, expected {expected}, got {digest}"
             raise DownloadCLIError(msg)
 
-    async def __run(self, *args: str, wd: str | None = None) -> Process:
+    @dataclass
+    class CLIRun:
+        """Represents a running CLI command."""
+
+        id: str
+        process: Process
+
+    async def __run(self, *args: str, wd: str | None = None) -> CLIRun:
         argv = list(args)
         argv.append("--json")
 
-        LOGGER.debug("Running: %s %s (wd=%s)", self.__path, " ".join(argv), wd)
+        uid = uuid4().hex[:8]
+        LOGGER.debug("[%s] Running: %s %s (wd=%s)", uid, self.__path, " ".join(argv), wd)
 
-        return await asyncio.create_subprocess_exec(
+        proc = await asyncio.create_subprocess_exec(
             self.__path,
             *argv,
             cwd=wd,
-            env={**os.environ, "PROTON_DRIVE_UNSAFE_SECRETS": "true"},
+            env={
+                **os.environ,
+                "PROTON_DRIVE_UNSAFE_SECRETS": "true",
+                "XDG_CACHE_HOME": self.__xdg,
+                "XDG_DATA_HOME": self.__xdg,
+                "XDG_STATE_HOME": self.__xdg,
+            },
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
+        return self.CLIRun(id=uid, process=proc)
 
-    async def list_files(self, folder: str) -> list[str]:
+    async def __get_auth(self) -> SimpleNamespace:
+        path = Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
+        async with aiofiles.open(path) as f:
+            data = await f.read()
+        return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+
+    async def list_files(self, folder: Path) -> list[str]:
         """List files in a folder."""
-        files = await self.run("filesystem", "list", folder)
+        files = await self.run("filesystem", "list", str(folder))
         if type(files) is not list:
             msg = f"Expected list of files, got {type(files)}"
             raise InvalidOutputError(msg)
@@ -161,19 +196,92 @@ class ProtonCLI:
             return [file.path for file in files]
         return [file.name.value for file in files]
 
-    async def run(self, *args: str) -> Any:
-        """Run a CLI command and return the parsed JSON output."""
-        proc = await self.__run(*args)
+    async def exists(self, path: Path | str) -> bool:
+        """Check if a file or folder exists."""
+        try:
+            await self.stat(path)
+        except NodeNotFoundError:
+            return False
+        return True
 
-        stdout, stderr = await proc.communicate()
+    async def stat(self, path: Path | str) -> SimpleNamespace:
+        """Get file or folder metadata."""
+        return await self.run("filesystem", "info", str(path))
 
-        return self._process_run(proc, stdout, stderr)
+    def __get_share(self, path: Path | str) -> str:
+        path = Path(path)
+        if path.is_relative_to("/my-files"):
+            return "/my-files"
+        parts = Path(path).parts
+        if len(parts) < 3:
+            msg = f"Invalid path: {path}"
+            raise ValueError(msg)
+        return f"/{parts[1]}/{parts[2]}"
 
     @classmethod
-    def _process_run(cls, proc: Process, stdout: bytes, stderr: bytes) -> Any:
-        LOGGER.debug("CLI Result %d: stdout=%s, stderr=%s", proc.returncode, stdout.decode(), stderr.decode())
+    def __get_parent_id(cls, uid: str) -> str:
+        return uid.rsplit("~", maxsplit=1)[0]
 
-        if proc.returncode != 0:
+    @classmethod
+    def __get_link_id(cls, uid: str) -> str:
+        return uid.rsplit("~", maxsplit=1)[-1]
+
+    async def trash(self, *files: Path | str) -> None:
+        """Move files to the trash."""
+        if not files:
+            return
+        parent = Path(files[0]).parent
+        if not all(Path(f).parent == parent for f in files):
+            msg = "All files must be in the same folder to trash them"
+            raise ValueError(msg)
+        infos = await asyncio.gather(*(self.stat(f) for f in files))
+        parent_id = self.__get_parent_id(infos[0].uid)
+        share = await self.stat(self.__get_share(files[0]))
+        res = await self.__api_call(
+            "POST",
+            f"/drive/shares/{share.deprecatedShareId}/folders/{parent_id}/trash_multiple",
+            {"LinkIDs": [self.__get_link_id(i.uid) for i in infos]},
+        )
+        for r in res.Responses:
+            if r.Response.Code != self.API_RESPONSE_SUCCESS:
+                msg = f"Failed to trash {r.LinkID}: {r.Response.Message}"
+                raise CLIError(msg)
+
+    async def __api_call(self, verb: str, path: str, body: dict) -> SimpleNamespace:
+        auth = await self.__get_auth()
+        headers = {
+            "Authorization": f"Bearer {auth.session.accessToken}",
+            "Content-Type": "application/json",
+            "x-pm-uid": auth.session.uid,
+            "x-pm-appversion": "web-drive@5.0.0",
+        }
+        async with self.__http_session() as session:
+            uid = uuid4().hex[:8]
+            LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
+            res = await session.request(
+                verb,
+                f"https://mail.proton.me/api{path}",
+                headers=headers,
+                json=body,
+            )
+            LOGGER.debug("[%s] API call response: %s", uid, res)
+            res.raise_for_status()
+            data = await res.text()
+        return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+
+    async def run(self, *args: str) -> Any:
+        """Run a CLI command and return the parsed JSON output."""
+        run = await self.__run(*args)
+        stdout, stderr = await run.process.communicate()
+        return self._process_run(run, stdout, stderr)
+
+    @classmethod
+    def _process_run(cls, run: CLIRun, stdout: bytes, stderr: bytes) -> Any:
+        LOGGER.debug(
+            "[%s] CLI Result %d: stdout=%s, stderr=%s", run.id, run.process.returncode, stdout.decode(), stderr.decode()
+        )
+
+        if run.process.returncode != 0:
             msg = stderr.decode()
             if "Node not found" in msg:
                 raise NodeNotFoundError(msg)
@@ -194,10 +302,10 @@ class ProtonCLI:
     class AuthFlow:
         """Represents an authentication flow."""
 
-        def __init__(self, *, url: str, proc: Process) -> None:
+        def __init__(self, *, url: str, run: ProtonCLI.CLIRun) -> None:
             """Initialize an AuthFlow object."""
             self.__url = url
-            self.__result = self.__wait_task(proc)
+            self.__result = self.__wait_task(run)
 
         def get_url(self) -> str:
             """Get the URL to open in the browser for authentication."""
@@ -219,12 +327,12 @@ class ProtonCLI:
             exc = self.__result.exception()
             return str(exc) if exc else None
 
-        def __wait_task(self, proc: Process) -> asyncio.Future:
+        def __wait_task(self, run: ProtonCLI.CLIRun) -> asyncio.Future:
             fut = asyncio.Future()
-            self.__task = asyncio.create_task(self.__finish(fut, proc))
+            self.__task = asyncio.create_task(self.__finish(fut, run))
             return fut
 
-        async def __finish(self, fut: asyncio.Future, proc: Process) -> None:
+        async def __finish(self, fut: asyncio.Future, run: ProtonCLI.CLIRun) -> None:
             stdout_res = b""
             stderr_res = b""
 
@@ -239,27 +347,26 @@ class ProtonCLI:
                     stderr_res += out
 
             await asyncio.gather(
-                _read_stream(proc.stdout, stdout=True),
-                _read_stream(proc.stderr, stdout=False),
+                _read_stream(run.process.stdout, stdout=True),
+                _read_stream(run.process.stderr, stdout=False),
             )
-
-            await proc.wait()
+            await run.process.wait()
 
             try:
-                res = ProtonCLI._process_run(proc, stdout_res, stderr_res)
+                res = ProtonCLI._process_run(run, stdout_res, stderr_res)
                 fut.set_result(res)
             except CLIError as e:
                 fut.set_exception(e)
 
     async def start_auth_flow(self) -> AuthFlow:
         """Start an authentication flow and return an AuthFlow object."""
-        proc = await self.__run("auth", "login")
+        run = await self.__run("auth", "login")
 
-        async def _read_url(proc: Process) -> str:
-            assert proc.stdout is not None  # noqa: S101
+        async def _read_url(run: ProtonCLI.CLIRun) -> str:
+            assert run.process.stdout is not None  # noqa: S101
             try:
                 async with asyncio.timeout(10):
-                    line = await proc.stdout.readline()
+                    line = await run.process.stdout.readline()
                     LOGGER.debug("auth login: %s", line)
                     line_parsed = json.loads(line.decode().strip())
                     return line_parsed["signInUrl"]
@@ -276,4 +383,4 @@ class ProtonCLI:
                 msg = "Missing 'signInUrl' in CLI output"
                 raise InvalidOutputError(msg) from e
 
-        return self.AuthFlow(url=await _read_url(proc), proc=proc)
+        return self.AuthFlow(url=await _read_url(run), run=run)

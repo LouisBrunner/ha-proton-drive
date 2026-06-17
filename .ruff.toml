@@ -16,6 +16,7 @@ ignore = [
   # they are useful
   "FIX001",
   "FIX002",
+  "TD001",
   "TD002",
   "TD003",
 ]

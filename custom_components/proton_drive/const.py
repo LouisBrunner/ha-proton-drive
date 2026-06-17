@@ -23,6 +23,7 @@ CLI_CHECKSUMS: dict[str, str] = {
 }
 
 
+# FIXME: delete when targeting later HA versions
 class OnProgressCallback(Protocol):
     """Ponyfill for older HA versions."""
 
