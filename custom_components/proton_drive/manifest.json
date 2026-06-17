@@ -8,7 +8,6 @@
 	"integration_type": "service",
 	"iot_class": "cloud_polling",
 	"issue_tracker": "https://github.com/LouisBrunner/ha-proton-drive/issues",
-	"loggers": ["proton-client"],
-	"requirements": ["aiofiles>=24.1.0", "gopy-ha-proton-drive==0.0.7"],
-	"version": "0.0.14-rc01"
+	"requirements": ["aiofiles>=25.1.0", "cachetools>=7.1.4", "cachetools-async>=0.0.5"],
+	"version": "0.1.0-rc01"
 }

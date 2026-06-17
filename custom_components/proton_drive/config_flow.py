@@ -1,5 +1,4 @@
 """Adds config flow for Blueprint."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -7,94 +6,29 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
-from homeassistant.helpers import instance_id, selector
-from proton.proton import Share
-from slugify import slugify
+from homeassistant.helpers import selector
 
-from .api import (
-    ProtonDriveAPIAuthenticationError,
-    ProtonDriveAPIConnectionError,
-    ProtonDriveAPIError,
-    ProtonDriveAPIMFAError,
-    ProtonDriveClient,
+from .cli import ProtonCLI
+from .const import (
+    CLI_VERSION,
+    CONF_BACKUP_FOLDER,
+    DOMAIN,
 )
-from .const import CONF_MFA_CODE, CONF_ROOT_FOLDER, CONF_SHARE_ID, DOMAIN
-from .helpers import create_credentials_from_data, serialize_credentials_to_data
 
 if TYPE_CHECKING:
+    import asyncio
     from collections.abc import Mapping
 
-    from proton.proton import Credentials
+
+def _form_config_auth() -> vol.Schema:
+    return vol.Schema({})
 
 
-INTERNAL_DEFAULT_SHARE_ID = "why-dont-you-accept-empty-strings"
-
-
-def form_config_auth(*, email: str | None) -> vol.Schema:
-    """Create a form schema for the authentication step."""
+def _form_backup_folder(*, backup_folder: str) -> vol.Schema:
     return vol.Schema(
         {
-            vol.Required(CONF_EMAIL, default=email): selector.TextSelector(
-                selector.TextSelectorConfig(
-                    type=selector.TextSelectorType.EMAIL, autocomplete="email"
-                ),
-            ),
-            vol.Required(CONF_PASSWORD): selector.TextSelector(
-                selector.TextSelectorConfig(
-                    type=selector.TextSelectorType.PASSWORD,
-                    autocomplete="current-password",
-                ),
-            ),
-        },
-    )
-
-
-def form_config_reauth() -> vol.Schema:
-    """Create a form schema for the reauthentication step."""
-    return vol.Schema(
-        {
-            vol.Required(CONF_PASSWORD): selector.TextSelector(
-                selector.TextSelectorConfig(
-                    type=selector.TextSelectorType.PASSWORD,
-                    autocomplete="current-password",
-                ),
-            ),
-        },
-    )
-
-
-def form_config_mfa() -> vol.Schema:
-    """Create a form schema for the MFA step."""
-    return vol.Schema(
-        {
-            vol.Required(CONF_MFA_CODE): selector.TextSelector(
-                selector.TextSelectorConfig(
-                    type=selector.TextSelectorType.TEXT, autocomplete="one-time-code"
-                ),
-            ),
-        },
-    )
-
-
-def form_config_folders(
-    *, share_id: str | None, root_folder: str | None, shares: list[Share] | None
-) -> vol.Schema:
-    """Create a form schema for the folders config step."""
-    fshares = shares or [Share(Name="My files", ShareID=INTERNAL_DEFAULT_SHARE_ID)]
-    return vol.Schema(
-        {
-            vol.Required(CONF_SHARE_ID, default=share_id): selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    mode=selector.SelectSelectorMode.DROPDOWN,
-                    options=[
-                        selector.SelectOptionDict(label=share.Name, value=share.ShareID)
-                        for share in fshares
-                    ],
-                ),
-            ),
-            vol.Optional(CONF_ROOT_FOLDER, default=(root_folder or "")): str,
-        },
+            vol.Optional(CONF_BACKUP_FOLDER, default=(backup_folder)): selector.TextSelector(),
+        }
     )
 
 
@@ -105,202 +39,153 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize."""
-        self._email = None
-        self._password = None
-        self._mfa_code = None
-        self._share_id = None
-        self._root_folder = None
-
-        self._creds = None
-        self._shares = None
+        self.__backup_folder: str = "/my-files"
+        self.__cli: ProtonCLI | None = None
+        self.__cli_task: asyncio.Task[ProtonCLI] | None = None
+        self.__auth_task: ProtonCLI.AuthFlow | None = None
+        self.__auth_flow_task: asyncio.Task[ProtonCLI.AuthFlow] | None = None
+        self.__init_error: tuple[str, str] | None = None
 
     async def async_step_user(
         self,
         user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Handle a flow initialized by the user."""
+        await self.async_set_unique_id(DOMAIN)
+        self._abort_if_unique_id_configured()
         return await self.async_step_auth(user_input)
 
     async def async_step_auth(
         self,
-        user_input: dict | None = None,
-        *,
-        errors: dict | None = None,
-        description_placeholders: dict | None = None,
+        _user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """Allow user to provide its Proton credentials."""
-        errors = errors or {}
-        description_placeholders = description_placeholders or {}
+        """Handle the authentication progress step."""
+        result = self.__ensure_cli()
+        if result is not None:
+            return result
 
-        if user_input is not None:
-            self._email = user_input[CONF_EMAIL]
-            self._password = user_input[CONF_PASSWORD]
+        result = self.__ensure_auth_flow()
+        if result is not None:
+            return result
 
-            try:
-                self._creds = await self.__authenticate(
-                    email=self._email,
-                    password=self._password,
-                )
-                return await self.__async_step_after_auth()
-            except ProtonDriveAPIAuthenticationError as error:
-                errors["base"] = "invalid_auth"
-                description_placeholders["error"] = str(error)
-            except ProtonDriveAPIConnectionError as error:
-                errors["base"] = "cannot_connect"
-                description_placeholders["error"] = str(error)
-            except ProtonDriveAPIMFAError:
-                return await self.async_step_mfa()
-            except ProtonDriveAPIError as error:
-                errors["base"] = "unknown"
-                description_placeholders["error"] = str(error)
+        return self.async_show_progress_done(next_step_id="auth_form")
 
+    async def async_step_auth_form(
+        self,
+        user_input: dict | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Show the authentication URL form."""
+        errors: dict = {}
+        description_placeholders: dict = {}
+
+        if self.__init_error is not None:
+            errors["base"], description_placeholders["error"] = self.__init_error
+        elif self.__auth_task is not None:
+            if self.__auth_task.is_done():
+                if self.__auth_task.has_error():
+                    errors["base"] = "failed_auth"
+                    description_placeholders["error"] = self.__auth_task.get_error()
+                else:
+                    return await self.__async_step_after_auth()
+            elif user_input is not None:
+                self.__init_error = None
+                errors["base"] = "pending_auth"
+
+        url = "unknown"
+        if self.__auth_task is not None:
+            url = self.__auth_task.get_url()
+        elif self.__init_error is not None:
+            url = "Unavailable due to error"
+        description_placeholders["url"] = url
+
+        step_id = "reauth_confirm" if self.source == config_entries.SOURCE_REAUTH else "auth_form"
         return self.async_show_form(
-            step_id="auth",
-            data_schema=form_config_auth(
-                email=(user_input or {}).get(CONF_EMAIL, self._email)
-            ),
+            step_id=step_id,
+            data_schema=_form_config_auth(),
             errors=errors,
             description_placeholders=description_placeholders,
         )
 
-    async def async_step_mfa(
-        self, user_input: dict | None = None
+    async def async_step_reauth_confirm(
+        self,
+        user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """
-        Ask user to supply a MFA code.
+        """Handle the reauth confirmation form submission."""
+        return await self.async_step_auth_form(user_input)
 
-        Optional, only required if the API asks for it.
-        """
-        errors, description_placeholders = {}, {}
+    def __ensure_cli(self) -> config_entries.ConfigFlowResult | None:
+        if self.__cli is not None:
+            return None
+        if self.__cli_task is None:
+            self.__cli_task = self.hass.async_create_task(ProtonCLI.create(self.hass))
+        if not self.__cli_task.done():
+            return self.async_show_progress(
+                step_id="auth",
+                progress_action="downloading_cli",
+                progress_task=self.__cli_task,
+                description_placeholders={"version": CLI_VERSION},
+            )
+        exc = self.__cli_task.exception()
+        if exc is not None:
+            self.__init_error = ("cli_failed", str(exc))
+        else:
+            self.__cli = self.__cli_task.result()
+        return None
 
+    def __ensure_auth_flow(self) -> config_entries.ConfigFlowResult | None:
+        if self.__cli is None or self.__auth_task is not None:
+            return None
+        if self.__auth_flow_task is None:
+            self.__auth_flow_task = self.hass.async_create_task(self.__cli.start_auth_flow())
+        if not self.__auth_flow_task.done():
+            return self.async_show_progress(
+                step_id="auth",
+                progress_action="starting_auth_flow",
+                progress_task=self.__auth_flow_task,
+            )
+        exc = self.__auth_flow_task.exception()
+        if exc is not None:
+            self.__init_error = ("cannot_auth", str(exc))
+        else:
+            self.__auth_task = self.__auth_flow_task.result()
+        return None
+
+    async def async_step_backup_folder(self, user_input: dict | None = None) -> config_entries.ConfigFlowResult:
+        """Handle the backup folder step."""
         if user_input is not None:
-            self._mfa = user_input[CONF_MFA_CODE]
-
-            assert self._email is not None
-            assert self._password is not None
-
-            try:
-                self._creds = await self.__authenticate(
-                    email=self._email,
-                    password=self._password,
-                    mfa=self._mfa,
-                )
-                return await self.__async_step_after_auth()
-            except (ProtonDriveAPIAuthenticationError, ProtonDriveAPIMFAError) as error:
-                errors["base"] = "invalid_auth"
-                description_placeholders["error"] = str(error)
-                return await self.async_step_auth(
-                    None,
-                    errors=errors,
-                    description_placeholders=description_placeholders,
-                )
-            except ProtonDriveAPIConnectionError as error:
-                errors["base"] = "cannot_connect"
-                description_placeholders["error"] = str(error)
-            except ProtonDriveAPIError as error:
-                errors["base"] = "unknown"
-                description_placeholders["error"] = str(error)
+            self.__backup_folder = user_input[CONF_BACKUP_FOLDER]
+            return await self.__finish()
 
         return self.async_show_form(
-            step_id="mfa",
-            data_schema=form_config_mfa(),
-            errors=errors,
-            description_placeholders=description_placeholders,
+            step_id="backup_folder",
+            data_schema=_form_backup_folder(backup_folder=self.__backup_folder),
         )
 
     async def __async_step_after_auth(self) -> config_entries.ConfigFlowResult:
         if self.source == config_entries.SOURCE_REAUTH:
             return await self.__finish()
-        return await self.async_step_folders()
-
-    def __update_creds(self, creds: Credentials) -> None:
-        self._creds = creds
-
-    async def async_step_folders(
-        self, user_input: dict | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Allow user to configure where the backups are stored."""
-        errors, description_placeholders = {}, {}
-
-        if self._shares is None:
-            assert self._creds is not None
-
-            try:
-                self._shares = await ProtonDriveClient(
-                    hass=self.hass,
-                    creds=self._creds,
-                    instance_id=await instance_id.async_get(self.hass),
-                    base_folder="",
-                    share_id="",
-                    update_creds=self.__update_creds,
-                ).list_shares()
-            except ProtonDriveAPIError as error:
-                errors["base"] = "unknown"
-                description_placeholders["error"] = str(error)
-
-        if user_input is not None:
-            self._share_id = user_input[CONF_SHARE_ID]
-            if self._share_id == INTERNAL_DEFAULT_SHARE_ID:
-                self._share_id = ""
-            self._root_folder = user_input[CONF_ROOT_FOLDER]
-
-            return await self.__finish()
-
-        return self.async_show_form(
-            step_id="folders",
-            data_schema=form_config_folders(
-                shares=self._shares,
-                share_id=(user_input or {}).get(CONF_SHARE_ID, self._share_id),
-                root_folder=(user_input or {}).get(CONF_ROOT_FOLDER, self._root_folder),
-            ),
-            errors=errors,
-            description_placeholders=description_placeholders,
-        )
+        return await self.async_step_backup_folder()
 
     async def async_step_reauth(
         self,
         entry_data: Mapping[str, Any],
     ) -> config_entries.ConfigFlowResult:
-        """Handle a flow started when the user need to reauthenticate."""
-        self._email = entry_data[CONF_EMAIL]
-        return await self.async_step_reauth_confirm()
+        """Handle a flow started when the user needs to reauthenticate."""
+        if CONF_BACKUP_FOLDER not in entry_data:
+            return self.async_abort(reason="legacy")
+        return await self.async_step_auth()
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Require user to re-enter their password."""
-        if user_input is None:
-            return self.async_show_form(
-                step_id="reauth_confirm",
-                data_schema=form_config_reauth(),
-            )
-        user_input[CONF_EMAIL] = self._email
-        return await self.async_step_user(user_input)
-
-    async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Reconfigure part of the flow."""
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> config_entries.ConfigFlowResult:
+        """Reconfigure the backup folder."""
         entry = self._get_reconfigure_entry()
-        self._email = entry.data[CONF_EMAIL]
-        self._creds = create_credentials_from_data(entry.data)
-        self._share_id = entry.data[CONF_SHARE_ID]
-        self._root_folder = entry.data[CONF_ROOT_FOLDER]
-        return await self.async_step_folders(user_input)
-
-    async def __authenticate(
-        self, *, email: str, password: str, mfa: str | None = None
-    ) -> Credentials:
-        """Validate credentials."""
-        return await ProtonDriveClient.login(
-            hass=self.hass, username=email, password=password, mfa=mfa
-        )
+        folder = entry.data.get(CONF_BACKUP_FOLDER)
+        if folder is None:
+            return self.async_abort(reason="legacy")
+        self.__backup_folder = folder
+        return await self.async_step_backup_folder(user_input)
 
     async def __finish(self) -> config_entries.ConfigFlowResult:
-        assert self._email is not None
-        assert self._creds is not None
-
-        await self.async_set_unique_id(unique_id=slugify(self._email))
+        await self.async_set_unique_id(unique_id=DOMAIN)
         if self.source in (
             config_entries.SOURCE_RECONFIGURE,
             config_entries.SOURCE_REAUTH,
@@ -310,15 +195,10 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if self.source == config_entries.SOURCE_RECONFIGURE:
                 entry = self._get_reconfigure_entry()
                 updates = {
-                    CONF_SHARE_ID: self._share_id,
-                    CONF_ROOT_FOLDER: self._root_folder,
+                    CONF_BACKUP_FOLDER: self.__backup_folder,
                 }
             else:
                 entry = self._get_reauth_entry()
-                updates = {
-                    CONF_EMAIL: self._email,
-                    **serialize_credentials_to_data(self._creds),
-                }
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
                 entry,
@@ -327,11 +207,8 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
-            title=self._email,
+            title="Proton Drive",
             data={
-                CONF_EMAIL: self._email,
-                CONF_SHARE_ID: self._share_id,
-                CONF_ROOT_FOLDER: self._root_folder,
-                **serialize_credentials_to_data(self._creds),
+                CONF_BACKUP_FOLDER: self.__backup_folder,
             },
         )

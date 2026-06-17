@@ -9,47 +9,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import instance_id
 
-from custom_components.proton_drive.const import (
-    CONF_ROOT_FOLDER,
-    CONF_SHARE_ID,
-)
-
 from .api import (
-    ProtonDriveAPIAuthenticationError,
-    ProtonDriveAPIError,
-    ProtonDriveAPIMFAError,
     ProtonDriveClient,
 )
+from .cli import (
+    AuthError,
+    CLIError,
+    CLIStartupError,
+    ProtonCLI,
+)
+from .const import CONF_BACKUP_FOLDER
 from .data import DATA_BACKUP_AGENT_LISTENERS, ProtonDriveData
-from .helpers import create_credentials_from_data, serialize_credentials_to_data
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from proton.proton import Credentials
 
     from .data import ProtonDriveConfigEntry
-
-
-def update_config(
-    hass: HomeAssistant, current: ProtonDriveConfigEntry, creds: Credentials
-) -> None:
-    """Update the config entry with new credentials."""
-
-    @callback
-    def async_update_entry() -> None:
-        hass.config_entries.async_update_entry(
-            current,
-            data={
-                **current.data,
-                **serialize_credentials_to_data(creds),
-            },
-        )
-
-    hass.add_job(async_update_entry)
 
 
 async def async_setup_entry(
@@ -57,23 +35,26 @@ async def async_setup_entry(
     entry: ProtonDriveConfigEntry,
 ) -> bool:
     """Set up Proton Drive from a config entry."""
-    ProtonDriveClient.configure_logger()
-
-    creds = create_credentials_from_data(entry.data)
+    if not entry.data.get(CONF_BACKUP_FOLDER):
+        msg = "This is a legacy configuration, please delete it and recreate it from scratch."
+        raise ConfigEntryNotReady(msg)
 
     try:
-        client = ProtonDriveClient(
+        cli = await ProtonCLI.create(hass)
+    except CLIStartupError as e:
+        raise ConfigEntryNotReady(str(e)) from e
+
+    try:
+        client = await ProtonDriveClient.create(
             hass=hass,
-            creds=creds,
+            cli=cli,
             instance_id=await instance_id.async_get(hass),
-            base_folder=entry.data[CONF_ROOT_FOLDER],
-            share_id=entry.data[CONF_SHARE_ID],
-            update_creds=lambda creds: update_config(hass, entry, creds),
+            backup_folder=entry.data[CONF_BACKUP_FOLDER],
         )
-    except (ProtonDriveAPIAuthenticationError, ProtonDriveAPIMFAError) as e:
-        raise ConfigEntryAuthFailed from e
-    except ProtonDriveAPIError as e:
-        raise ConfigEntryNotReady from e
+    except AuthError as e:
+        raise ConfigEntryAuthFailed(str(e)) from e
+    except CLIError as e:
+        raise ConfigEntryNotReady(str(e)) from e
 
     entry.runtime_data = ProtonDriveData(
         client=client,
@@ -88,8 +69,6 @@ async def async_setup_entry(
     return True
 
 
-async def async_unload_entry(
-    _hass: HomeAssistant, _entry: ProtonDriveConfigEntry
-) -> bool:
+async def async_unload_entry(_hass: HomeAssistant, _entry: ProtonDriveConfigEntry) -> bool:
     """Unload a config entry."""
     return True
