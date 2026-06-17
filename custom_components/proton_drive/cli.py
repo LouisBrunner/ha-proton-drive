@@ -188,6 +188,7 @@ class ProtonCLI:
 
     async def list_files(self, folder: Path) -> list[str]:
         """List files in a folder."""
+        LOGGER.debug("Listing files in folder: %s", folder)
         files = await self.run("filesystem", "list", str(folder))
         if type(files) is not list:
             msg = f"Expected list of files, got {type(files)}"
@@ -230,12 +231,13 @@ class ProtonCLI:
         """Move files to the trash."""
         if not files:
             return
+        LOGGER.info("Trashing files: %s", files)
         parent = Path(files[0]).parent
         if not all(Path(f).parent == parent for f in files):
             msg = "All files must be in the same folder to trash them"
             raise ValueError(msg)
         infos = await asyncio.gather(*(self.stat(f) for f in files))
-        parent_id = self.__get_parent_id(infos[0].uid)
+        parent_id = self.__get_link_id(infos[0].parentUid)
         share = await self.stat(self.__get_share(files[0]))
         res = await self.__api_call(
             "POST",
@@ -264,9 +266,9 @@ class ProtonCLI:
                 headers=headers,
                 json=body,
             )
-            LOGGER.debug("[%s] API call response: %s", uid, res)
-            res.raise_for_status()
             data = await res.text()
+            LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
+            res.raise_for_status()
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     async def run(self, *args: str) -> Any:

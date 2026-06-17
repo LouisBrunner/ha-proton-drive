@@ -141,6 +141,7 @@ class ProtonDriveClient:
 
     async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:
         """Download a Home Assistant backup."""
+        LOGGER.info("Downloading backup with ID: %s", backup_id)
         metadata_suffix = self.__make_metadata_filename("", backup_id)
 
         LOGGER.debug("Looking for metadata file with suffix: %s", metadata_suffix)
@@ -201,6 +202,7 @@ class ProtonDriveClient:
         on_progress: OnProgressCallback | None = None,
     ) -> None:
         """Upload a Home Assistant backup."""
+        LOGGER.info("Uploading backup with ID: %s", backup.backup_id)
         archive_name = suggested_filename(backup)
         base_name = archive_name.removesuffix(self.ARCHIVE_EXT)
         archive_name = self.__make_backup_filename(base_name, backup.backup_id)
