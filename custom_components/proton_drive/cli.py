@@ -220,10 +220,6 @@ class ProtonCLI:
         return f"/{parts[1]}/{parts[2]}"
 
     @classmethod
-    def __get_parent_id(cls, uid: str) -> str:
-        return uid.rsplit("~", maxsplit=1)[0]
-
-    @classmethod
     def __get_link_id(cls, uid: str) -> str:
         return uid.rsplit("~", maxsplit=1)[-1]
 
