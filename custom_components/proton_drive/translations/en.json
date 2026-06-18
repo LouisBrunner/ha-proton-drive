@@ -36,6 +36,7 @@
       "starting_auth_flow": "Starting authentication flow…"
     },
     "abort": {
+      "already_in_progress": "Authentication flow already in progress, please complete it before starting a new one",
       "already_configured": "This integration has already been configured",
       "legacy": "This configuration is no longer supported, please delete it and recreate it.",
       "reauth_successful": "Re-authentication successful",

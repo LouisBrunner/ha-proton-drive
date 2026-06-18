@@ -115,7 +115,7 @@ class ProtonCLI:
                         await aiofiles.os.unlink(tmp_path)
                     msg = "Failed to write Proton Drive CLI to disk"
                     raise DownloadCLIError(msg) from e
-        except aiohttp.ClientError as e:
+        except (aiohttp.ClientError, TimeoutError) as e:
             msg = "Failed to download Proton Drive CLI"
             raise DownloadCLIError(msg) from e
 
@@ -133,7 +133,8 @@ class ProtonCLI:
     @classmethod
     def __http_session(cls) -> aiohttp.ClientSession:
         connector = aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver())
-        return aiohttp.ClientSession(connector=connector)
+        timeout = aiohttp.ClientTimeout(total=300, connect=30)
+        return aiohttp.ClientSession(connector=connector, timeout=timeout)
 
     @classmethod
     async def __verify_checksum(cls, path: Path, arch: str) -> None:
@@ -246,25 +247,29 @@ class ProtonCLI:
                 raise CLIError(msg)
 
     async def __api_call(self, verb: str, path: str, body: dict) -> SimpleNamespace:
-        auth = await self.__get_auth()
-        headers = {
-            "Authorization": f"Bearer {auth.session.accessToken}",
-            "Content-Type": "application/json",
-            "x-pm-uid": auth.session.uid,
-            "x-pm-appversion": "web-drive@5.0.0",
-        }
-        async with self.__http_session() as session:
-            uid = uuid4().hex[:8]
-            LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
-            res = await session.request(
-                verb,
-                f"https://mail.proton.me/api{path}",
-                headers=headers,
-                json=body,
-            )
-            data = await res.text()
-            LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
-            res.raise_for_status()
+        try:
+            auth = await self.__get_auth()
+            headers = {
+                "Authorization": f"Bearer {auth.session.accessToken}",
+                "Content-Type": "application/json",
+                "x-pm-uid": auth.session.uid,
+                "x-pm-appversion": "web-drive@5.0.0",
+            }
+            async with self.__http_session() as session:
+                uid = uuid4().hex[:8]
+                LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
+                res = await session.request(
+                    verb,
+                    f"https://mail.proton.me/api{path}",
+                    headers=headers,
+                    json=body,
+                )
+                data = await res.text()
+                LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
+                res.raise_for_status()
+        except (aiohttp.ClientError, TimeoutError) as e:
+            msg = f"Failed to make API call: {verb} {path}"
+            raise CLIError(msg) from e
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     async def run(self, *args: str) -> Any:

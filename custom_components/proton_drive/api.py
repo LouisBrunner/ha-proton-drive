@@ -95,7 +95,8 @@ class ProtonDriveClient:
     METADATA_EXT = ".metadata.json"
     ARCHIVE_EXT = ".tar"
     PART_EXT = f"{ARCHIVE_EXT}.part"
-    READ_CHUNK = 4096
+    READ_CHUNK = 131_072
+    DOWNLOAD_WINDOW = 4
     ALLOWED_DELETE_PREFIXES: ClassVar[list[Path]] = [Path("/my-files/"), Path("/devices/"), Path("/photos/")]
 
     def __init__(
@@ -163,37 +164,66 @@ class ProtonDriveClient:
 
         LOGGER.debug("Read metadata: %s", metadata)
 
-        if metadata is not Metadata or metadata.chunks <= 1:
+        if not isinstance(metadata, Metadata) or metadata.chunks <= 1:
             name = (
                 self.__make_backup_filename(metadata.base_name, backup_id)
                 if isinstance(metadata, Metadata)
                 else f"${metadata_file.removesuffix(self.METADATA_EXT)}{self.ARCHIVE_EXT}"
             )
             LOGGER.debug("Downloading single backup file: %s", name)
-            async with self.__temp_folder() as path:
+            files = [name]
+        else:
+            files = [self.__make_chunk_filename(metadata.base_name, backup_id, i) for i in range(metadata.chunks)]
+            LOGGER.debug("Downloading chunked (%d chunks) backup file")
+
+        async with self.__temp_folder() as path:
+            async for chunk in self.__stream_files(path, files):
+                yield chunk
+
+        LOGGER.info("Finished downloading backup with ID: %s", backup_id)
+
+    async def __stream_files(self, path: Path, files: list[str]) -> AsyncIterator[bytes]:
+        tasks: dict[int, asyncio.Task[Path | CLIError]] = {}
+        next_i = 0
+
+        async def download(i: int) -> Path | CLIError:
+            name = files[i]
+            LOGGER.debug("Downloading file %d/%d: %s", i + 1, len(files), name)
+            try:
                 await self.__cli.run(
                     "filesystem",
                     "download",
                     self.__make_filepath(name),
                     str(path),
                 )
-                async with aiofiles.open(path / name, "rb") as file:
-                    while chunk := await file.read(self.READ_CHUNK):
-                        yield chunk
-        else:
-            for i in range(metadata.chunks):
-                name = self.__make_chunk_filename(metadata.base_name, backup_id, i)
-                LOGGER.debug("Downloading chunk %d/%d: %s", i + 1, metadata.chunks, name)
-                async with self.__temp_folder() as path:
-                    await self.__cli.run(
-                        "filesystem",
-                        "download",
-                        self.__make_filepath(name),
-                        str(path),
-                    )
-                    async with aiofiles.open(path / name, "rb") as file:
-                        while chunk := await file.read(self.READ_CHUNK):
-                            yield chunk
+            except CLIError as e:
+                LOGGER.error("Failed to download file %d/%d: %s", i + 1, len(files), name)
+                return e
+            LOGGER.debug("Downloaded file %d/%d: %s", i + 1, len(files), name)
+            return path / name
+
+        while next_i < min(self.DOWNLOAD_WINDOW, len(files)):
+            LOGGER.debug("Scheduling download for file %d/%d: %s", next_i + 1, len(files), files[next_i])
+            tasks[next_i] = asyncio.create_task(download(next_i))
+            next_i += 1
+
+        for i, name in enumerate(files):
+            p = await tasks[i]
+            if isinstance(p, CLIError):
+                msg = f"Failed to download backup file {name}: {p}"
+                raise ProtonDriveError(msg) from p
+
+            if next_i < len(files):
+                LOGGER.debug("Scheduling download for file %d/%d: %s", next_i + 1, len(files), files[next_i])
+                tasks[next_i] = asyncio.create_task(download(next_i))
+                next_i += 1
+
+            LOGGER.debug("Yielding file %d/%d: %s", i + 1, len(files), name)
+            async with aiofiles.open(p, "rb") as f:
+                while chunk := await f.read(self.READ_CHUNK):
+                    # LOGGER.debug("Yielding chunk of size %d from file %s", len(chunk), name)  # noqa: ERA001
+                    yield chunk
+            LOGGER.debug("Finished yielding file %d/%d: %s", i + 1, len(files), name)
 
     async def upload_backup(
         self,

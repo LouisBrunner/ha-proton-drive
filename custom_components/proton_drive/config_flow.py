@@ -125,6 +125,9 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 progress_task=self.__cli_task,
                 description_placeholders={"version": CLI_VERSION},
             )
+        if self.__cli_task.cancelled():
+            self.__init_error = ("cli_failed", "CLI initialization was cancelled")
+            return None
         exc = self.__cli_task.exception()
         if exc is not None:
             self.__init_error = ("cli_failed", str(exc))
@@ -143,6 +146,9 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 progress_action="starting_auth_flow",
                 progress_task=self.__auth_flow_task,
             )
+        if self.__auth_flow_task.cancelled():
+            self.__init_error = ("cannot_auth", "Authentication flow was cancelled")
+            return None
         exc = self.__auth_flow_task.exception()
         if exc is not None:
             self.__init_error = ("cannot_auth", str(exc))

@@ -59,7 +59,7 @@ class ProtonDriveBackupAgent(BackupAgent):
     """Proton Drive backup agent."""
 
     domain = DOMAIN
-    unique_id = DOMAIN
+    unique_id = "CLI"
 
     def __init__(self, config_entry: ProtonDriveConfigEntry) -> None:
         """Initialize the cloud backup sync agent."""
