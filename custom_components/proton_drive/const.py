@@ -24,11 +24,11 @@ CLI_CHECKSUMS: dict[str, str] = {
         "1bf5a485d5af9adf3b7909fc92f2d2ef0b133edc4939d5faf1d096eb744425bb"
     ),
     "musl-arm64": (
-        "a04559c10a2d59ebd015ff75ad76f4a1244e1f53f0c395693fa0d9ec94f6e377"
-        "e3bd392147d915df7f8a30387933378c3fa5f5af87e23dc8efcc45008cecf70b"
+        "45fc7bb512286689efcd6a0dddc8087db6e308b83aa69c71257879ce5aa5c548"
+        "81aaf3b635ac1963df4108158aa672b277c319bd8c35633516ec2f27f344a195"
     ),
     "musl-x64": (
-        "85ad94c9b09afac6c20c3eb166943a178396ee2aeff849e0a9c27e79063615ea"
-        "30ba9f50d48de6d3452a1562189a6dcea028cdac1f09a3986da78a99fb808e0d"
+        "ec52adaa4872221f29ed4122d485bbdb4caf89021171706974ac68bce3da1fbd"
+        "c87dfe4bdff50e207561438ed5d302445bfab3ac83bab90e4950c7d9331a8b5a"
     ),
 }
