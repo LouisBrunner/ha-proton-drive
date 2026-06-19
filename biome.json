@@ -29,14 +29,14 @@
   },
   "overrides": [
     {
-      "includes": ["**/manifest.json"],
       "assist": {
         "actions": {
           "source": {
             "useSortedKeys": "off"
           }
         }
-      }
+      },
+      "includes": ["**/manifest.json"]
     }
   ]
 }
