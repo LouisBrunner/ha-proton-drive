@@ -26,5 +26,17 @@
   },
   "linter": {
     "enabled": true
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/manifest.json"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    }
+  ]
 }

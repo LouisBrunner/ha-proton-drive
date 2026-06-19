@@ -2,6 +2,11 @@ INSIDE_DOCKER = $(shell stat /.dockerenv 2>&1 >/dev/null && echo 1 || echo 0)
 ifeq ($(INSIDE_DOCKER),1)
 endif
 
+BIOME = biome
+ifeq ($(shell which biome),)
+	BIOME = bunx biome
+endif
+
 all:
 .PHONY: all
 
@@ -58,4 +63,5 @@ format-fix:
 
 manifest-sync:
 	uv run scripts/manifest_sync.py
+	$(BIOME) format --write custom_components/proton_drive/manifest.json
 .PHONY: manifest-sync

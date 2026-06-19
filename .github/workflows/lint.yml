@@ -45,6 +45,11 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Set up Biome
+        uses: biomejs/setup-biome@0d181e85625cb7dafc75257719de900eda7393c6 # v2.7.1
+        with:
+          version: 2.5.0
+
       - name: Check manifest sync
         run: |
           make manifest-sync
