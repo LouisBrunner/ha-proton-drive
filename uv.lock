@@ -1,0 +1,1534 @@
+version = 1
+revision = 3
+requires-python = ">=3.14.2"
+
+[[package]]
+name = "acme"
+version = "5.4.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "josepy" },
+    { name = "pyopenssl" },
+    { name = "pyrfc3339" },
+    { name = "requests" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/acme-5.4.0-py3-none-any.whl", hash = "sha256:e05c50f64958fe26475df21e3a18949993eff9d68a7e771f215c56b83e9e66cc" },
+]
+
+[[package]]
+name = "aiodns"
+version = "4.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "pycares" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiodns-4.0.0-py3-none-any.whl", hash = "sha256:a188a75fb8b2b7862ac8f84811a231402fb74f5b4e6f10766dc8a4544b0cf989" },
+]
+
+[[package]]
+name = "aiofiles"
+version = "25.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/c3/534eac40372d8ee36ef40df62ec129bee4fdb5ad9706e58a29be53b2c970/aiofiles-25.1.0.tar.gz", hash = "sha256:a8d728f0a29de45dc521f18f07297428d56992a742f0cd2701ba86e44d23d5b2", size = 46354, upload-time = "2025-10-09T20:51:04.358Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl", hash = "sha256:abe311e527c862958650f9438e859c1fa7568a141b22abcd015e120e86a85695", size = 14668, upload-time = "2025-10-09T20:51:03.174Z" },
+]
+
+[[package]]
+name = "aiogithubapi"
+version = "26.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "backoff" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiogithubapi-26.0.0-py3-none-any.whl", hash = "sha256:156b5f9217d23cb0eb65e233b19c10f499f1ba3bcf1d7d65e3a463c034e3813a" },
+]
+
+[[package]]
+name = "aiohappyeyeballs"
+version = "2.6.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohappyeyeballs-2.6.2-py3-none-any.whl", hash = "sha256:4708045e2d7a6c6bdf8aafa8ed39649eaf926a4543b54560659129e3365953c4" },
+]
+
+[[package]]
+name = "aiohasupervisor"
+version = "0.4.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "mashumaro" },
+    { name = "orjson" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohasupervisor-0.4.3-py3-none-any.whl", hash = "sha256:ae05a59e890c6ed83dd801e9ebb7e12ca67ac5aed7cef29315f5422fdf7022b5" },
+]
+
+[[package]]
+name = "aiohttp"
+version = "3.13.5"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohappyeyeballs" },
+    { name = "aiosignal" },
+    { name = "attrs" },
+    { name = "frozenlist" },
+    { name = "multidict" },
+    { name = "propcache" },
+    { name = "yarl" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohttp-3.13.5-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:2f1f1b6c8062d4718ea28219230252731d47d74d6a475180708e473886e381e6" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohttp-3.13.5-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:10786fd6d047aefccb45f54dee3a27412f0818a80d0250882946952c0b442f05" },
+]
+
+[[package]]
+name = "aiohttp-asyncmdnsresolver"
+version = "0.1.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiodns" },
+    { name = "aiohttp" },
+    { name = "zeroconf" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohttp_asyncmdnsresolver-0.1.1-py3-none-any.whl", hash = "sha256:d04ded993e9f0e07c07a1bc687cde447d9d32e05bcf55ecbf94f63b33dcab93e" },
+]
+
+[[package]]
+name = "aiohttp-cors"
+version = "0.8.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohttp" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohttp_cors-0.8.1-py3-none-any.whl", hash = "sha256:3180cf304c5c712d626b9162b195b1db7ddf976a2a25172b35bb2448b890a80d" },
+]
+
+[[package]]
+name = "aiohttp-fast-zlib"
+version = "0.3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohttp" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiohttp_fast_zlib-0.3.0-py3-none-any.whl", hash = "sha256:d4cb20760a3e1137c93cb42c13871cbc9cd1fdc069352f2712cd650d6c0e537e" },
+]
+
+[[package]]
+name = "aiooui"
+version = "0.1.9"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiooui-0.1.9-py3-none-any.whl", hash = "sha256:737a5e62d8726540218c2b70e5f966d9912121e4644f3d490daf8f3c18b182e5" },
+]
+
+[[package]]
+name = "aiosignal"
+version = "1.4.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "frozenlist" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiosignal-1.4.0-py3-none-any.whl", hash = "sha256:053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e" },
+]
+
+[[package]]
+name = "aiozoneinfo"
+version = "0.2.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "tzdata" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/aiozoneinfo-0.2.3-py3-none-any.whl", hash = "sha256:5423f0354c9eed982e3f1c35edeeef1458d4cc6a10f106616891a089a8455661" },
+]
+
+[[package]]
+name = "annotatedyaml"
+version = "1.0.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "propcache" },
+    { name = "pyyaml" },
+    { name = "voluptuous" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/annotatedyaml-1.0.2-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:5cb4ee79c08da2b8f4f24b1775732ca6c497682f3c9b3fd65dee4ea084fc925c" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/annotatedyaml-1.0.2-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:94ba9937418c1b189b267540b47fa0dc24c148292739d06a6ca31c2ca8482f16" },
+]
+
+[[package]]
+name = "anyio"
+version = "4.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/b5/001890774a9552aff22502b8da382593109ce0c95314abaebbb116567545/anyio-4.14.0.tar.gz", hash = "sha256:b47c1f9ccf73e67021df785332508f99379c68fa7d0684e8e3492cb1d4b23f89", size = 253586, upload-time = "2026-06-15T22:00:49.021Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/16/9826f089383c593cdfc4a6e5aca94d9e91ae1692c57af82c3b2aa5e810f7/anyio-4.14.0-py3-none-any.whl", hash = "sha256:dd9b7a2a9799ed6552fde617b2c5df02b7fdd7d88392fc48101e51bae46164d9", size = 123506, upload-time = "2026-06-15T22:00:47.595Z" },
+]
+
+[[package]]
+name = "astral"
+version = "2.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "pytz" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/astral-2.2-py2.py3-none-any.whl", hash = "sha256:b9ef70faf32e81a8ba174d21e8f29dc0b53b409ef035f27e0749ddc13cb5982a" },
+]
+
+[[package]]
+name = "async-interrupt"
+version = "1.2.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/async_interrupt-1.2.2-py3-none-any.whl", hash = "sha256:0a8deb884acfb5fe55188a693ae8a4381bbbd2cb6e670dac83869489513eec2c" },
+]
+
+[[package]]
+name = "atomicwrites-homeassistant"
+version = "1.4.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/atomicwrites_homeassistant-1.4.1-py2.py3-none-any.whl", hash = "sha256:01457de800961db7d5b575f3c92e7fb56e435d88512c366afb0873f4f092bb0d" },
+]
+
+[[package]]
+name = "attrs"
+version = "25.4.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373" },
+]
+
+[[package]]
+name = "audioop-lts"
+version = "0.2.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/audioop_lts-0.2.1-cp313-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:fbae5d6925d7c26e712f0beda5ed69ebb40e14212c185d129b8dfbfcc335eb48" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/audioop_lts-0.2.1-cp313-abi3-musllinux_1_2_armv6l.whl", hash = "sha256:722081e57d1c8f95e6e6d177f9a13a7480b40e3f791fe40bf042778a07947bd9" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/audioop_lts-0.2.1-cp313-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:382b79365746bd3c4f933c90caa521b226ba554b1de3a3338b0a9ffb17cc0d55" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/audioop_lts-0.2.1-cp313-abi3-musllinux_1_2_i686.whl", hash = "sha256:d2d5434717f33117f29b5691fbdf142d36573d751716249a288fbb96ba26a281" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/audioop_lts-0.2.1-cp313-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:56b7a0a4dba8e353436f31a932f3045d108a67b5943b30f85a5563f4d8488d77" },
+]
+
+[[package]]
+name = "awesomeversion"
+version = "25.8.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/awesomeversion-25.8.0-py3-none-any.whl", hash = "sha256:1c314683abfcc3e26c62af9e609b585bbcbf2ec19568df2f60ff1034fb1dae28" },
+]
+
+[[package]]
+name = "backoff"
+version = "2.2.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8" },
+]
+
+[[package]]
+name = "bcrypt"
+version = "5.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/bcrypt-5.0.0-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:3ca8a166b1140436e058298a34d88032ab62f15aae1c598580333dc21d27ef10" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/bcrypt-5.0.0-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:61afc381250c3182d9078551e3ac3a41da14154fbff647ddf52a769f588c4172" },
+]
+
+[[package]]
+name = "bleak"
+version = "3.0.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "dbus-fast", marker = "sys_platform == 'linux'" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-corebluetooth", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-libdispatch", marker = "sys_platform == 'darwin'" },
+    { name = "winrt-runtime", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-devices-bluetooth", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-devices-bluetooth-advertisement", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-devices-bluetooth-genericattributeprofile", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-devices-enumeration", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-devices-radios", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-foundation", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-foundation-collections", marker = "sys_platform == 'win32'" },
+    { name = "winrt-windows-storage-streams", marker = "sys_platform == 'win32'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/bleak-3.0.2-py3-none-any.whl", hash = "sha256:39092feb9e83f1df5ad2f88e837723c7211c982ce9e9cda6235104bc2ebe0d0d" },
+]
+
+[[package]]
+name = "bleak-retry-connector"
+version = "4.6.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "bleak" },
+    { name = "bluetooth-adapters", marker = "sys_platform == 'linux'" },
+    { name = "dbus-fast", marker = "sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/bleak_retry_connector-4.6.1-py3-none-any.whl", hash = "sha256:018ba421babe05785e5a6497c73f3894772fad0f7fa5b054d48beb3d180ce0c4" },
+]
+
+[[package]]
+name = "bluetooth-adapters"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiooui" },
+    { name = "bleak" },
+    { name = "dbus-fast", marker = "sys_platform == 'linux'" },
+    { name = "uart-devices" },
+    { name = "usb-devices" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3d/e0/6f7d10ffd8e5b62fc0998c285991925aaa9b727521bede0e29a0b0084a94/bluetooth_adapters-2.4.0.tar.gz", hash = "sha256:e8a61935a867deb8af981e986bdf504c4398895ff254eac626790184a4fdd1e3", size = 17501, upload-time = "2026-05-26T14:28:58.347Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/ba/f11151a72f782bf24908c2b57163a2ff854024594c4ff3d04f1c47f40ed0/bluetooth_adapters-2.4.0-py3-none-any.whl", hash = "sha256:f2841c49e8750658ecb8c1d46d2c05a9de4740362eb83e3e7e501d3092c0377e", size = 20604, upload-time = "2026-05-26T14:28:57.107Z" },
+]
+
+[[package]]
+name = "bluetooth-auto-recovery"
+version = "1.6.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "bluetooth-adapters" },
+    { name = "btsocket" },
+    { name = "pyric" },
+    { name = "usb-devices" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/bluetooth_auto_recovery-1.6.4-py3-none-any.whl", hash = "sha256:39485c41e17a2d4887c1fbf04b4e2fd37f0f3c7898db388753e026ca3addf055" },
+]
+
+[[package]]
+name = "bluetooth-data-tools"
+version = "1.28.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cryptography" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/bluetooth_data_tools-1.28.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:4a071d7af2614af9a00f65063adaacda94f4357cc2dfedda7057c005f437dacd" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/bluetooth_data_tools-1.28.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:8e3895dbbdad2a39de5a7b36a4ddb5e2f8ad38029628e3eddfde31a5c56d81b5" },
+]
+
+[[package]]
+name = "boto3"
+version = "1.43.33"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "botocore" },
+    { name = "jmespath" },
+    { name = "s3transfer" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/boto3-1.43.33-py3-none-any.whl", hash = "sha256:97b563127f7678ad20249f9bf99877b7a3a78f6fcdcf222c6e25d27d4406ce0d" },
+]
+
+[[package]]
+name = "botocore"
+version = "1.43.33"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "jmespath" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/botocore-1.43.33-py3-none-any.whl", hash = "sha256:4292bb2cc645e5cb404515c54b5b164563f2b4218c52aeee3f1ce851724e177a" },
+]
+
+[[package]]
+name = "btsocket"
+version = "0.3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/btsocket-0.3.0-py2.py3-none-any.whl", hash = "sha256:949821c1b580a88e73804ad610f5173d6ae258e7b4e389da4f94d614344f1a9c" },
+]
+
+[[package]]
+name = "cachetools"
+version = "7.1.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/cachetools-7.1.4-py3-none-any.whl", hash = "sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54" },
+]
+
+[[package]]
+name = "cachetools-async"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cachetools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/59/6d/01404fffea95b33d186a4d921b141918c0daf3ff74b6a715c0ac2de8f42e/cachetools_async-0.0.5.tar.gz", hash = "sha256:e99ec8f3a78e82b4f524e78f01d15b8746531481d862ac4f2d8af2a686e1c571", size = 24837, upload-time = "2025-06-09T08:11:28.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/fa/136f97313ab298286725fc8004d44f5fc352ea416c2b874b7a91e83df66a/cachetools_async-0.0.5-py3-none-any.whl", hash = "sha256:8f690c8bc291718a652395832e90afa797195c838e98d6a9e530dc1de66fbc34", size = 4750, upload-time = "2025-06-09T08:11:27.871Z" },
+]
+
+[[package]]
+name = "certifi"
+version = "2026.6.17"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db" },
+]
+
+[[package]]
+name = "cffi"
+version = "2.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/cffi-2.0.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:737fe7d37e1a1bffe70bd5754ea763a62a066dc5913ca57e957824b72a85e205" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/cffi-2.0.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:38100abb9d1b1435bc4cc340bb4489635dc2f0da7456590877030c9b3d40b0c1" },
+]
+
+[[package]]
+name = "charset-normalizer"
+version = "3.4.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/a1/67fe25fac3c7642725500a3f6cfe5821ad557c3abb11c9d20d12c7008d3e/charset_normalizer-3.4.7.tar.gz", hash = "sha256:ae89db9e5f98a11a4bf50407d4363e7b09b31e55bc117b4f7d80aab97ba009e5", size = 144271, upload-time = "2026-04-02T09:28:39.342Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/97/c8/c67cb8c70e19ef1960b97b22ed2a1567711de46c4ddf19799923adc836c2/charset_normalizer-3.4.7-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:c36c333c39be2dbca264d7803333c896ab8fa7d4d6f0ab7edb7dfd7aea6e98c0", size = 309234, upload-time = "2026-04-02T09:27:07.194Z" },
+    { url = "https://files.pythonhosted.org/packages/99/85/c091fdee33f20de70d6c8b522743b6f831a2f1cd3ff86de4c6a827c48a76/charset_normalizer-3.4.7-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1c2aed2e5e41f24ea8ef1590b8e848a79b56f3a5564a65ceec43c9d692dc7d8a", size = 208042, upload-time = "2026-04-02T09:27:08.749Z" },
+    { url = "https://files.pythonhosted.org/packages/87/1c/ab2ce611b984d2fd5d86a5a8a19c1ae26acac6bad967da4967562c75114d/charset_normalizer-3.4.7-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:54523e136b8948060c0fa0bc7b1b50c32c186f2fceee897a495406bb6e311d2b", size = 228706, upload-time = "2026-04-02T09:27:09.951Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/29/2b1d2cb00bf085f59d29eb773ce58ec2d325430f8c216804a0a5cd83cbca/charset_normalizer-3.4.7-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:715479b9a2802ecac752a3b0efa2b0b60285cf962ee38414211abdfccc233b41", size = 224727, upload-time = "2026-04-02T09:27:11.175Z" },
+    { url = "https://files.pythonhosted.org/packages/47/5c/032c2d5a07fe4d4855fea851209cca2b6f03ebeb6d4e3afdb3358386a684/charset_normalizer-3.4.7-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bd6c2a1c7573c64738d716488d2cdd3c00e340e4835707d8fdb8dc1a66ef164e", size = 215882, upload-time = "2026-04-02T09:27:12.446Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/c2/356065d5a8b78ed04499cae5f339f091946a6a74f91e03476c33f0ab7100/charset_normalizer-3.4.7-cp314-cp314-manylinux_2_31_armv7l.whl", hash = "sha256:c45e9440fb78f8ddabcf714b68f936737a121355bf59f3907f4e17721b9d1aae", size = 200860, upload-time = "2026-04-02T09:27:13.721Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/cd/a32a84217ced5039f53b29f460962abb2d4420def55afabe45b1c3c7483d/charset_normalizer-3.4.7-cp314-cp314-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl", hash = "sha256:3534e7dcbdcf757da6b85a0bbf5b6868786d5982dd959b065e65481644817a18", size = 211564, upload-time = "2026-04-02T09:27:15.272Z" },
+    { url = "https://files.pythonhosted.org/packages/44/86/58e6f13ce26cc3b8f4a36b94a0f22ae2f00a72534520f4ae6857c4b81f89/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:e8ac484bf18ce6975760921bb6148041faa8fef0547200386ea0b52b5d27bf7b", size = 211276, upload-time = "2026-04-02T09:27:16.834Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/fe/d17c32dc72e17e155e06883efa84514ca375f8a528ba2546bee73fc4df81/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_armv7l.whl", hash = "sha256:a5fe03b42827c13cdccd08e6c0247b6a6d4b5e3cdc53fd1749f5896adcdc2356", size = 201238, upload-time = "2026-04-02T09:27:18.229Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/29/f33daa50b06525a237451cdb6c69da366c381a3dadcd833fa5676bc468b3/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_ppc64le.whl", hash = "sha256:2d6eb928e13016cea4f1f21d1e10c1cebd5a421bc57ddf5b1142ae3f86824fab", size = 230189, upload-time = "2026-04-02T09:27:19.445Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/6e/52c84015394a6a0bdcd435210a7e944c5f94ea1055f5cc5d56c5fe368e7b/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_riscv64.whl", hash = "sha256:e74327fb75de8986940def6e8dee4f127cc9752bee7355bb323cc5b2659b6d46", size = 211352, upload-time = "2026-04-02T09:27:20.79Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/d7/4353be581b373033fb9198bf1da3cf8f09c1082561e8e922aa7b39bf9fe8/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_s390x.whl", hash = "sha256:d6038d37043bced98a66e68d3aa2b6a35505dc01328cd65217cefe82f25def44", size = 227024, upload-time = "2026-04-02T09:27:22.063Z" },
+    { url = "https://files.pythonhosted.org/packages/30/45/99d18aa925bd1740098ccd3060e238e21115fffbfdcb8f3ece837d0ace6c/charset_normalizer-3.4.7-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:7579e913a5339fb8fa133f6bbcfd8e6749696206cf05acdbdca71a1b436d8e72", size = 217869, upload-time = "2026-04-02T09:27:23.486Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/05/5ee478aa53f4bb7996482153d4bfe1b89e0f087f0ab6b294fcf92d595873/charset_normalizer-3.4.7-cp314-cp314-win32.whl", hash = "sha256:5b77459df20e08151cd6f8b9ef8ef1f961ef73d85c21a555c7eed5b79410ec10", size = 148541, upload-time = "2026-04-02T09:27:25.146Z" },
+    { url = "https://files.pythonhosted.org/packages/48/77/72dcb0921b2ce86420b2d79d454c7022bf5be40202a2a07906b9f2a35c97/charset_normalizer-3.4.7-cp314-cp314-win_amd64.whl", hash = "sha256:92a0a01ead5e668468e952e4238cccd7c537364eb7d851ab144ab6627dbbe12f", size = 159634, upload-time = "2026-04-02T09:27:26.642Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/a3/c2369911cd72f02386e4e340770f6e158c7980267da16af8f668217abaa0/charset_normalizer-3.4.7-cp314-cp314-win_arm64.whl", hash = "sha256:67f6279d125ca0046a7fd386d01b311c6363844deac3e5b069b514ba3e63c246", size = 148384, upload-time = "2026-04-02T09:27:28.271Z" },
+    { url = "https://files.pythonhosted.org/packages/94/09/7e8a7f73d24dba1f0035fbbf014d2c36828fc1bf9c88f84093e57d315935/charset_normalizer-3.4.7-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:effc3f449787117233702311a1b7d8f59cba9ced946ba727bdc329ec69028e24", size = 330133, upload-time = "2026-04-02T09:27:29.474Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/da/96975ddb11f8e977f706f45cddd8540fd8242f71ecdb5d18a80723dcf62c/charset_normalizer-3.4.7-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fbccdc05410c9ee21bbf16a35f4c1d16123dcdeb8a1d38f33654fa21d0234f79", size = 216257, upload-time = "2026-04-02T09:27:30.793Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/e8/1d63bf8ef2d388e95c64b2098f45f84758f6d102a087552da1485912637b/charset_normalizer-3.4.7-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:733784b6d6def852c814bce5f318d25da2ee65dd4839a0718641c696e09a2960", size = 234851, upload-time = "2026-04-02T09:27:32.44Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/40/e5ff04233e70da2681fa43969ad6f66ca5611d7e669be0246c4c7aaf6dc8/charset_normalizer-3.4.7-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:a89c23ef8d2c6b27fd200a42aa4ac72786e7c60d40efdc76e6011260b6e949c4", size = 233393, upload-time = "2026-04-02T09:27:34.03Z" },
+    { url = "https://files.pythonhosted.org/packages/be/c1/06c6c49d5a5450f76899992f1ee40b41d076aee9279b49cf9974d2f313d5/charset_normalizer-3.4.7-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6c114670c45346afedc0d947faf3c7f701051d2518b943679c8ff88befe14f8e", size = 223251, upload-time = "2026-04-02T09:27:35.369Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/9f/f2ff16fb050946169e3e1f82134d107e5d4ae72647ec8a1b1446c148480f/charset_normalizer-3.4.7-cp314-cp314t-manylinux_2_31_armv7l.whl", hash = "sha256:a180c5e59792af262bf263b21a3c49353f25945d8d9f70628e73de370d55e1e1", size = 206609, upload-time = "2026-04-02T09:27:36.661Z" },
+    { url = "https://files.pythonhosted.org/packages/69/d5/a527c0cd8d64d2eab7459784fb4169a0ac76e5a6fc5237337982fd61347e/charset_normalizer-3.4.7-cp314-cp314t-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl", hash = "sha256:3c9a494bc5ec77d43cea229c4f6db1e4d8fe7e1bbffa8b6f0f0032430ff8ab44", size = 220014, upload-time = "2026-04-02T09:27:38.019Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/80/8a7b8104a3e203074dc9aa2c613d4b726c0e136bad1cc734594b02867972/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8d828b6667a32a728a1ad1d93957cdf37489c57b97ae6c4de2860fa749b8fc1e", size = 218979, upload-time = "2026-04-02T09:27:39.37Z" },
+    { url = "https://files.pythonhosted.org/packages/02/9a/b759b503d507f375b2b5c153e4d2ee0a75aa215b7f2489cf314f4541f2c0/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_armv7l.whl", hash = "sha256:cf1493cd8607bec4d8a7b9b004e699fcf8f9103a9284cc94962cb73d20f9d4a3", size = 209238, upload-time = "2026-04-02T09:27:40.722Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/4e/0f3f5d47b86bdb79256e7290b26ac847a2832d9a4033f7eb2cd4bcf4bb5b/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_ppc64le.whl", hash = "sha256:0c96c3b819b5c3e9e165495db84d41914d6894d55181d2d108cc1a69bfc9cce0", size = 236110, upload-time = "2026-04-02T09:27:42.33Z" },
+    { url = "https://files.pythonhosted.org/packages/96/23/bce28734eb3ed2c91dcf93abeb8a5cf393a7b2749725030bb630e554fdd8/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_riscv64.whl", hash = "sha256:752a45dc4a6934060b3b0dab47e04edc3326575f82be64bc4fc293914566503e", size = 219824, upload-time = "2026-04-02T09:27:43.924Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/6f/6e897c6984cc4d41af319b077f2f600fc8214eb2fe2d6bcb79141b882400/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_s390x.whl", hash = "sha256:8778f0c7a52e56f75d12dae53ae320fae900a8b9b4164b981b9c5ce059cd1fcb", size = 233103, upload-time = "2026-04-02T09:27:45.348Z" },
+    { url = "https://files.pythonhosted.org/packages/76/22/ef7bd0fe480a0ae9b656189ec00744b60933f68b4f42a7bb06589f6f576a/charset_normalizer-3.4.7-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:ce3412fbe1e31eb81ea42f4169ed94861c56e643189e1e75f0041f3fe7020abe", size = 225194, upload-time = "2026-04-02T09:27:46.706Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/a7/0e0ab3e0b5bc1219bd80a6a0d4d72ca74d9250cb2382b7c699c147e06017/charset_normalizer-3.4.7-cp314-cp314t-win32.whl", hash = "sha256:c03a41a8784091e67a39648f70c5f97b5b6a37f216896d44d2cdcb82615339a0", size = 159827, upload-time = "2026-04-02T09:27:48.053Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/1d/29d32e0fb40864b1f878c7f5a0b343ae676c6e2b271a2d55cc3a152391da/charset_normalizer-3.4.7-cp314-cp314t-win_amd64.whl", hash = "sha256:03853ed82eeebbce3c2abfdbc98c96dc205f32a79627688ac9a27370ea61a49c", size = 174168, upload-time = "2026-04-02T09:27:49.795Z" },
+    { url = "https://files.pythonhosted.org/packages/de/32/d92444ad05c7a6e41fb2036749777c163baf7a0301a040cb672d6b2b1ae9/charset_normalizer-3.4.7-cp314-cp314t-win_arm64.whl", hash = "sha256:c35abb8bfff0185efac5878da64c45dafd2b37fb0383add1be155a763c1f083d", size = 153018, upload-time = "2026-04-02T09:27:51.116Z" },
+    { url = "https://files.pythonhosted.org/packages/db/8f/61959034484a4a7c527811f4721e75d02d653a35afb0b6054474d8185d4c/charset_normalizer-3.4.7-py3-none-any.whl", hash = "sha256:3dce51d0f5e7951f8bb4900c257dad282f49190fdbebecd4ba99bcc41fef404d", size = 61958, upload-time = "2026-04-02T09:28:37.794Z" },
+]
+
+[[package]]
+name = "ciso8601"
+version = "2.3.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/ciso8601-2.3.3-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:aa9df2f84ab25454f14df92b2dd4f9aae03dbfa581565a716b3e89b8e2110c03" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/ciso8601-2.3.3-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:32e06a35eb251cfc4bbe01a858c598da0a160e4ad7f42ff52477157ceaf48061" },
+]
+
+[[package]]
+name = "cronsim"
+version = "2.7"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/cronsim-2.7-py3-none-any.whl", hash = "sha256:1e1431fa08c51dc7f72e67e571c7c7a09af26420169b607badd4ca9677ffad1e" },
+]
+
+[[package]]
+name = "cryptography"
+version = "46.0.5"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/cryptography-46.0.5-cp311-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:890bcb4abd5a2d3f852196437129eb3667d62630333aacc13dfd470fad3aaa82" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/cryptography-46.0.5-cp311-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:80a8d7bfdf38f87ca30a5391c0c9ce4ed2926918e017c29ddf643d0ed2778ea1" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/cryptography-46.0.5-cp313-abi3-musllinux_1_2_armv6l.whl", hash = "sha256:abd7d70f46ce1fbdf55a02629c7f80e0ce1144e29eeff80485f8310a655def0f" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/cryptography-46.0.5-cp313-abi3-musllinux_1_2_armv7l.whl", hash = "sha256:b12484821999f3a94829225c565843126100afd6e09162bc31e96bef6bad2b1b" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/cryptography-46.0.5-cp313-abi3-musllinux_1_2_i686.whl", hash = "sha256:19a5373ba3c1390f547b33e620a6eec01025b5fd270d32afd925052b7b12f369" },
+]
+
+[[package]]
+name = "dbus-fast"
+version = "5.0.22"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/dbus_fast-5.0.22-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:856f0543c593f3480e93e67bcd1aa4ddc1d94a6076cfd3ad4e0f5e2b01b33dc3" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/dbus_fast-5.0.22-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:595bd3ccfd8318cbafff79f33a15709fee3728724fd61d5fa220080d73b574cb" },
+]
+
+[[package]]
+name = "envs"
+version = "1.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/envs-1.4-py3-none-any.whl", hash = "sha256:4a1fcf85e4d4443e77c348ff7cdd3bfc4c0178b181d447057de342e4172e5ed1" },
+]
+
+[[package]]
+name = "fnv-hash-fast"
+version = "2.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "fnvhash" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/fnv_hash_fast-2.0.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:71790245ddfeb06e6c88368bf105dbb4132ec5fdead9fc96f6df675dc07ab243" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/fnv_hash_fast-2.0.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:f783843bac7bce71ccb75964bb9a41877bb3ff8de504ebdc5836ca888ff366de" },
+]
+
+[[package]]
+name = "fnvhash"
+version = "0.1.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/fnvhash-0.1.0-py3-none-any.whl", hash = "sha256:cf5f4651bbf2fd65e1cf6dfa82c6d2c545aea1759235550e81498c391da81426" },
+]
+
+[[package]]
+name = "frozenlist"
+version = "1.8.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/frozenlist-1.8.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:2f05983daecab868a31e1da44462873306d3cbfd76d1f0b5b69c473d21dbb128" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/frozenlist-1.8.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:073f8bf8becba60aa931eb3bc420b217bb7d5b8f4750e6f8b3be7f3da85d38b7" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/frozenlist-1.8.0-py3-none-any.whl", hash = "sha256:0c18a16eab41e82c295618a77502e17b195883241c563b00f0aa5106fc4eaa0d" },
+]
+
+[[package]]
+name = "grpcio"
+version = "1.81.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b0/b5/1ff353970a87eda4c98251e34d2dfd214abd4982dc89119c9252a2a482d2/grpcio-1.81.1.tar.gz", hash = "sha256:6fa10a767143a5e82e8eaab53918af0cd8909a57a27f8cb2288b80a613ac671b", size = 13026582, upload-time = "2026-06-11T12:46:51.673Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/58/19414622b1bf6981bc9c05a365bd548e71876c89000083b3af489251e9c0/grpcio-1.81.1-cp314-cp314-linux_armv7l.whl", hash = "sha256:506f48f2f9c29b143fca3dad7b0d518c188b6c9648c75a2ae6e2d9f2c13a060b", size = 6055336, upload-time = "2026-06-11T12:46:20.557Z" },
+    { url = "https://files.pythonhosted.org/packages/32/f1/2ec88adb92b0eba970dd0e0e7dd086341daa3c75eba4f735f9e44bf684b0/grpcio-1.81.1-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:d865db4a6318e1c1bea83292e0ed231090538fc4ca45425b0f0480eb338bbc6e", size = 12056279, upload-time = "2026-06-11T12:46:24.255Z" },
+    { url = "https://files.pythonhosted.org/packages/41/36/e8c5f8c6ec71de73733695ebc809e98b178b534ec6d8eaa31a7ebab4ad4c/grpcio-1.81.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:e2aa72e3ce1770317ef534f63d397b55e130725f5149bd36077c3b539019db27", size = 6608225, upload-time = "2026-06-11T12:46:27.601Z" },
+    { url = "https://files.pythonhosted.org/packages/30/22/96fc577a845ab093326d9ab1adb874bd4936c8cf98ac8ed2f3db13a0a2fb/grpcio-1.81.1-cp314-cp314-manylinux2014_i686.manylinux_2_17_i686.whl", hash = "sha256:0490c30c261eded63f3f354979f9dc4502a9fb944cccb60cd9dc85f5a7349854", size = 7306576, upload-time = "2026-06-11T12:46:30.514Z" },
+    { url = "https://files.pythonhosted.org/packages/76/7b/61dab5d5969f28d97fb1009cead1df0a5cd987d3315e1b37f18a4449f8bc/grpcio-1.81.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:410482da976329fe5f4067270401b12cf2bd552ff8020f054ecfaddb5475f9d6", size = 6812165, upload-time = "2026-06-11T12:46:33.699Z" },
+    { url = "https://files.pythonhosted.org/packages/82/78/6e501929d4f5f96462fd82fd9f0f06e5f9612207582b862868d68757b27d/grpcio-1.81.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:e3657301562ac3cb8018d30d0d3ebfa39932239f7b5703422057ef14b69949f5", size = 7422962, upload-time = "2026-06-11T12:46:36.511Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/7e/f2157589e66daa78ebb3165942d05a08bdea93b9d11c2bc1e172aef89685/grpcio-1.81.1-cp314-cp314-musllinux_1_2_i686.whl", hash = "sha256:24c8e57504c8f45b237e40b99262d181071e5099a07053695b75d97bb53053a0", size = 8408176, upload-time = "2026-06-11T12:46:39.803Z" },
+    { url = "https://files.pythonhosted.org/packages/da/df/c6717fef716e00d235ffb96123baf6dce76d6004f6233fa767c502861460/grpcio-1.81.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:b427c19380991a4eaab2f6144b64b99b412043314c6bf4ab544f97bb31ee4190", size = 7846681, upload-time = "2026-06-11T12:46:43.013Z" },
+    { url = "https://files.pythonhosted.org/packages/36/84/3502e9f210a6a5c4438c8aca3f88edd2e04f6a27f3d41b26cf0a0024b096/grpcio-1.81.1-cp314-cp314-win32.whl", hash = "sha256:61233fe8951e5c85dff81c2458b6528624760166946b5b47ea150a589168411f", size = 4264615, upload-time = "2026-06-11T12:46:45.741Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/b0/4af731ff7492c68a96e4c71bfd0f4590acde92b31c6fe4894e6465c10ff6/grpcio-1.81.1-cp314-cp314-win_amd64.whl", hash = "sha256:3768a5ff1b2125e6f552e561b6b2dca0e64982d8949689b4df145cf8b98d7821", size = 5070275, upload-time = "2026-06-11T12:46:48.486Z" },
+]
+
+[[package]]
+name = "h11"
+version = "0.16.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86" },
+]
+
+[[package]]
+name = "ha-proton-drive"
+version = "0"
+source = { virtual = "." }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "cachetools" },
+    { name = "cachetools-async" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+    { name = "tombi" },
+    { name = "ty" },
+]
+docker = [
+    { name = "aiohasupervisor" },
+]
+hass = [
+    { name = "homeassistant" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiofiles", specifier = ">=25.1.0" },
+    { name = "cachetools", specifier = ">=7.1.4" },
+    { name = "cachetools-async", specifier = ">=0.0.5" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ruff", specifier = "==0.15.18" },
+    { name = "tombi", specifier = "==1" },
+    { name = "ty", specifier = "==0.0.51" },
+]
+docker = [{ name = "aiohasupervisor", specifier = "==0.4.3" }]
+hass = [{ name = "homeassistant", specifier = "==2026.4.0" }]
+
+[[package]]
+name = "habluetooth"
+version = "6.1.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "async-interrupt" },
+    { name = "bleak" },
+    { name = "bleak-retry-connector" },
+    { name = "bluetooth-adapters" },
+    { name = "bluetooth-auto-recovery" },
+    { name = "bluetooth-data-tools" },
+    { name = "btsocket" },
+    { name = "dbus-fast", marker = "sys_platform == 'linux'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/habluetooth-6.1.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:8f5bcbf145957d39358ae99c07ee04db5b303f4dd4c9cb3e210b14597726da47" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/habluetooth-6.1.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:4e7766ce743e42eea2820fbacebc688cd3b9ed90cdb61676f37c5d92ec7b458e" },
+]
+
+[[package]]
+name = "hass-nabucasa"
+version = "2.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "acme" },
+    { name = "aiohttp" },
+    { name = "atomicwrites-homeassistant" },
+    { name = "attrs" },
+    { name = "ciso8601" },
+    { name = "cryptography" },
+    { name = "grpcio" },
+    { name = "icmplib" },
+    { name = "josepy" },
+    { name = "pycognito" },
+    { name = "pyjwt" },
+    { name = "requests" },
+    { name = "sentence-stream" },
+    { name = "snitun" },
+    { name = "voluptuous" },
+    { name = "webrtc-models" },
+    { name = "yarl" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/hass_nabucasa-2.2.0-py3-none-any.whl", hash = "sha256:366620278baed52e5fbf078d5262e84d401a938e14ca5c30d1aa280848ba865d" },
+]
+
+[[package]]
+name = "home-assistant-bluetooth"
+version = "1.13.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "habluetooth" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/home_assistant_bluetooth-1.13.1-py3-none-any.whl", hash = "sha256:cdf13b5b45f7744165677831e309ee78fbaf0c2866c6b5931e14d1e4e7dae5d7" },
+]
+
+[[package]]
+name = "homeassistant"
+version = "2026.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiodns" },
+    { name = "aiogithubapi" },
+    { name = "aiohttp" },
+    { name = "aiohttp-asyncmdnsresolver" },
+    { name = "aiohttp-cors" },
+    { name = "aiohttp-fast-zlib" },
+    { name = "aiozoneinfo" },
+    { name = "annotatedyaml" },
+    { name = "astral" },
+    { name = "async-interrupt" },
+    { name = "atomicwrites-homeassistant" },
+    { name = "attrs" },
+    { name = "audioop-lts" },
+    { name = "awesomeversion" },
+    { name = "bcrypt" },
+    { name = "certifi" },
+    { name = "ciso8601" },
+    { name = "cronsim" },
+    { name = "cryptography" },
+    { name = "fnv-hash-fast" },
+    { name = "hass-nabucasa" },
+    { name = "home-assistant-bluetooth" },
+    { name = "httpx" },
+    { name = "ifaddr" },
+    { name = "jinja2" },
+    { name = "lru-dict" },
+    { name = "orjson" },
+    { name = "packaging" },
+    { name = "pillow" },
+    { name = "propcache" },
+    { name = "psutil-home-assistant" },
+    { name = "pyjwt" },
+    { name = "pyopenssl" },
+    { name = "python-slugify" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "securetar" },
+    { name = "sqlalchemy" },
+    { name = "standard-aifc" },
+    { name = "standard-telnetlib" },
+    { name = "typing-extensions" },
+    { name = "ulid-transform" },
+    { name = "urllib3" },
+    { name = "uv" },
+    { name = "voluptuous" },
+    { name = "voluptuous-openapi" },
+    { name = "voluptuous-serialize" },
+    { name = "webrtc-models" },
+    { name = "yarl" },
+    { name = "zeroconf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/29/c3/463010f528a6ac17262fc6d5e824b4fc4605fe6d572b96284a44822b4007/homeassistant-2026.4.0.tar.gz", hash = "sha256:ad27243988446199e664d09f6a3196ddbe7648c3275efbd23fe3bfde3c3f1ae5", size = 32301866, upload-time = "2026-04-01T12:55:14.373Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fc/a4/77c262fa088c26dbb44705fd1e35b2699437d6529925538a4dc2df7c8a0f/homeassistant-2026.4.0-py3-none-any.whl", hash = "sha256:221a859583af46b5c158c641954906c3edab2cdf6c847a6edc828c3d625a9ac1", size = 53443006, upload-time = "2026-04-01T12:55:08.944Z" },
+]
+
+[[package]]
+name = "httpcore"
+version = "1.0.9"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "certifi" },
+    { name = "h11" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/httpcore-1.0.9-py3-none-any.whl", hash = "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55" },
+]
+
+[[package]]
+name = "httpx"
+version = "0.28.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "anyio" },
+    { name = "certifi" },
+    { name = "httpcore" },
+    { name = "idna" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad" },
+]
+
+[[package]]
+name = "icmplib"
+version = "3.0.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/icmplib-3.0.4-py3-none-any.whl", hash = "sha256:336b75c6c23c5ce99ddec33f718fab09661f6ad698e35b6f1fc7cc0ecf809398" },
+]
+
+[[package]]
+name = "idna"
+version = "3.18"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/idna-3.18-py3-none-any.whl", hash = "sha256:7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2" },
+]
+
+[[package]]
+name = "ifaddr"
+version = "0.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/ifaddr-0.2.0-py3-none-any.whl", hash = "sha256:085e0305cfe6f16ab12d72e2024030f5d52674afad6911bb1eee207177b8a748" },
+]
+
+[[package]]
+name = "jinja2"
+version = "3.1.6"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "markupsafe" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67" },
+]
+
+[[package]]
+name = "jmespath"
+version = "1.1.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/jmespath-1.1.0-py3-none-any.whl", hash = "sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64" },
+]
+
+[[package]]
+name = "josepy"
+version = "2.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cryptography" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/josepy-2.2.0-py3-none-any.whl", hash = "sha256:63e9dd116d4078778c25ca88f880cc5d95f1cab0099bebe3a34c2e299f65d10b" },
+]
+
+[[package]]
+name = "lru-dict"
+version = "1.3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/lru_dict-1.3.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:35f0f1073021a0f985867ad9601303ba4876934f0700c6ff79ff5bba3a516e01" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/lru_dict-1.3.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:3f237ce6e70e191fc8932ca1f312c5d585df3281c2487c9af1f052c39af96e32" },
+]
+
+[[package]]
+name = "markupsafe"
+version = "3.0.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/markupsafe-3.0.3-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:ec15a59cf5af7be74194f7ab02d0f59a62bdcf1a537677ce67a2537c9b87fcda" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/markupsafe-3.0.3-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:2713baf880df847f2bece4230d4d094280f4e67b1e813eec43b4c0e144a34ffe" },
+]
+
+[[package]]
+name = "mashumaro"
+version = "3.22"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/mashumaro-3.22-py3-none-any.whl", hash = "sha256:17dc4d7294c33ef380a8b929dda0608577aa2141988c00a0c4932310108fe71d" },
+]
+
+[[package]]
+name = "multidict"
+version = "6.7.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:1250eae43212a268348b672484b75b340ba695de6ad757962581315b18e3a798" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:105a8dc2f33b71ae8b24a8c0a2bf8412e2f65a3835422b30e5307543e1357f4e" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56" },
+]
+
+[[package]]
+name = "orjson"
+version = "3.11.7"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/orjson-3.11.7-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:bda117c4148e81f746655d5a3239ae9bd00cb7bc3ca178b5fc5a5997e9744183" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/orjson-3.11.7-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:962d046ee1765f74a1da723f4b33e3b228fe3a48bd307acce5021dfefe0e29b2" },
+]
+
+[[package]]
+name = "packaging"
+version = "26.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/packaging-26.2-py3-none-any.whl", hash = "sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e" },
+]
+
+[[package]]
+name = "pillow"
+version = "12.1.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pillow-12.1.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:f95c00d5d6700b2b890479664a06e754974848afaae5e21beb4d83c106923fd0" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/pillow-12.1.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:559b38da23606e68681337ad74622c4dbba02254fc9cb4488a305dd5975c7eeb" },
+]
+
+[[package]]
+name = "propcache"
+version = "0.4.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/propcache-0.4.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:118086ac686ed1841ddf06f2c8888e30f8a30d4f0c0e645371cd7fa3657ebec6" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/propcache-0.4.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:35c21ad246a402264dcb3ea46592bc54df29cdc12fa12719a0b94f724344fe7f" },
+]
+
+[[package]]
+name = "psutil"
+version = "7.2.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/psutil-7.2.2-cp36-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:fd04ef36b4a6d599bbdb225dd1d3f51e00105f6d48a28f006da7f9822f2606d8" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/psutil-7.2.2-cp36-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:b58fabe35e80b264a4e3bb23e6b96f9e45a3df7fb7eed419ac0e5947c61e47cc" },
+]
+
+[[package]]
+name = "psutil-home-assistant"
+version = "0.0.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "psutil" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/psutil_home_assistant-0.0.1-py3-none-any.whl", hash = "sha256:35a782e93e23db845fc4a57b05df9c52c2d5c24f5b233bd63b01bae4efae3c41" },
+]
+
+[[package]]
+name = "pycares"
+version = "5.0.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cffi" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pycares-5.0.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:a7d197835cdb4b202a3b12562b32799e27bb132262d4aa1ac3ee9d440e8ec22c" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/pycares-5.0.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:9de80997de7538619b7dd28ec4371e5172e3f9480e4fc648726d3d5ba661ca05" },
+]
+
+[[package]]
+name = "pycognito"
+version = "2024.5.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "boto3" },
+    { name = "envs" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pycognito-2024.5.1-py3-none-any.whl", hash = "sha256:c821895dc62b7aea410fdccae4f96d8be7cab374182339f50a03de0fcb93f9ea" },
+]
+
+[[package]]
+name = "pycparser"
+version = "3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992" },
+]
+
+[[package]]
+name = "pyjwt"
+version = "2.10.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb" },
+]
+
+[package.optional-dependencies]
+crypto = [
+    { name = "cryptography" },
+]
+
+[[package]]
+name = "pynacl"
+version = "1.6.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pynacl-1.6.2-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:68be3a09455743ff9505491220b64440ced8973fe930f270c8e07ccfa25b1f9e" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/pynacl-1.6.2-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:8b097553b380236d51ed11356c953bf8ce36a29a3e596e934ecabe76c985a577" },
+]
+
+[[package]]
+name = "pyobjc-core"
+version = "12.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/e8/a6cc12669211e7c9b29e8f26bf2159e67c7a73555dc229018abf46d8167a/pyobjc_core-12.2.tar.gz", hash = "sha256:51d7de4cfa32f508c6a7aac31f131b12d5e196a8dcf588e6e8d7e6337224f66d", size = 1062064, upload-time = "2026-05-30T12:29:55.417Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/b2/ecfbd0c80e7688ed6f3db23414758443c69c3a9d318f2036e26530ede955/pyobjc_core-12.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:a51352e478785cd7fce1604b9902125a286139caea0759cb340e59d75b594992", size = 6421372, upload-time = "2026-05-30T10:47:27.907Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/89/ecd5cb62573fba9a95f8bdb838a9860a360907104a0724af6611d3b20512/pyobjc_core-12.2-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:3137b2d14f9f2154fb5b1c092c38d15e164f68ab190c18335d76e4e7e1583f79", size = 6676789, upload-time = "2026-05-30T10:59:33.811Z" },
+    { url = "https://files.pythonhosted.org/packages/74/24/5091d156b19df0f657127f42b08eada11c9b9cc5df49fedb91bb354d9821/pyobjc_core-12.2-cp315-cp315-macosx_10_15_universal2.whl", hash = "sha256:1e4216f2ec962dc13cf7f31b9bc3a7190337a0f401e7dc9de6b2d8c08b9dbb7a", size = 6476112, upload-time = "2026-05-30T11:21:46.914Z" },
+    { url = "https://files.pythonhosted.org/packages/77/e2/ee91ea8a0ad28e759f351ed8654027c34fc62ad5e207672522025a6a3fc2/pyobjc_core-12.2-cp315-cp315t-macosx_10_15_universal2.whl", hash = "sha256:ac952bac8057dd0b97ee7b311c39f97cad7430b7cfbd67ca0a30135a7d17d2ab", size = 6718365, upload-time = "2026-05-30T11:51:47.35Z" },
+]
+
+[[package]]
+name = "pyobjc-framework-cocoa"
+version = "12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/cc/927169225e72bab9c9b44285656768fb75052a0bc85fdbca62740e1ca43c/pyobjc_framework_cocoa-12.2.tar.gz", hash = "sha256:20b392e2b7241caad0538dfde12143343e5dfe48f72e7df660a7548e635903dc", size = 3125555, upload-time = "2026-05-30T12:35:09.273Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/4b/df8e359e5e422e8f1430bde038aa64364e8c1d4542d7f6fcc4f8a97ec0b7/pyobjc_framework_cocoa-12.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:aecfd44908fa12a9291fb6ca2458ebbc611102de6784f2202a35fd5ed9f56c60", size = 388334, upload-time = "2026-05-30T11:59:25.861Z" },
+    { url = "https://files.pythonhosted.org/packages/43/a2/68c0702cc9d6dbc7077edbd13ccc9aa30ac589d514f51ad6f5c3840e3bf1/pyobjc_framework_cocoa-12.2-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:ef679740f541c52118149b558b757d1f11d9dcf30c2a23344b13a6af6a99a1ab", size = 392376, upload-time = "2026-05-30T11:59:50.031Z" },
+    { url = "https://files.pythonhosted.org/packages/83/c3/e170672302e75cc1aa833546fb0d5a3bd4a126ede4124566d5a2e4a50cd6/pyobjc_framework_cocoa-12.2-cp315-cp315-macosx_10_15_universal2.whl", hash = "sha256:290e544a8c2d0786a34a359d825eaad44ebaaa3b30cdd765b2755422ca39a0d2", size = 388566, upload-time = "2026-05-30T12:00:13.606Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/6b/78e98e4de11646e56cf98066f9f84b43c86adc8b273a660d85a6ceba7a31/pyobjc_framework_cocoa-12.2-cp315-cp315t-macosx_10_15_universal2.whl", hash = "sha256:5a0bed77b0b56074cc2b4564aae3e6e9d5da5fdf93252f50b6dbced0f7fece3a", size = 392674, upload-time = "2026-05-30T12:00:37.572Z" },
+]
+
+[[package]]
+name = "pyobjc-framework-corebluetooth"
+version = "12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+    { name = "pyobjc-framework-cocoa" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/df/bee7ba216f9fb513710aac1701b78c97b087b37fca8ec1806f8572e0bbb3/pyobjc_framework_corebluetooth-12.2.tar.gz", hash = "sha256:8b4e5ca99953c360c391a695b0782a5328fcecafd56fdf790ad709e932feb306", size = 37552, upload-time = "2026-05-30T12:35:33.863Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/ef/a75bd6c17e012f7d73a8a2d94e324528a82dc06451b6019d910b1a993864/pyobjc_framework_corebluetooth-12.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:8a3b35a1253de626d5efe705dda36a4f1fb8753e48aafdc4dbf99dc9c9526d86", size = 13196, upload-time = "2026-05-30T12:02:07.462Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/d7/11a8a90463e6a3928274e65bd17acaa3f0bfbd9c19a68b93c61cbc4fa379/pyobjc_framework_corebluetooth-12.2-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:bd0b9e7bc2fffcfa4843d7f103e1e927ce37817a70932d080378e1e29a073381", size = 13387, upload-time = "2026-05-30T12:02:09.431Z" },
+    { url = "https://files.pythonhosted.org/packages/10/d0/d5cc4ba6dbe21f6f4c90e8f0087254f1f742134580394b763025416ab7d2/pyobjc_framework_corebluetooth-12.2-cp315-cp315-macosx_10_15_universal2.whl", hash = "sha256:a2dd4bd8fde13b97a3339a42d6703c9c9b148663e2e23a184ffe2877c8e51470", size = 13192, upload-time = "2026-05-30T12:02:11.41Z" },
+    { url = "https://files.pythonhosted.org/packages/25/a0/964b18affc8f6b582ed891f3b59413452fd95acce4adbf070a389b5197e4/pyobjc_framework_corebluetooth-12.2-cp315-cp315t-macosx_10_15_universal2.whl", hash = "sha256:42db087cd3a328abc620c76c7f708d7c2b451f3dbc0779983812a0c84320fe60", size = 13394, upload-time = "2026-05-30T12:02:13.443Z" },
+]
+
+[[package]]
+name = "pyobjc-framework-libdispatch"
+version = "12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+    { name = "pyobjc-framework-cocoa" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/fe/e23be301e46c30450955cdb096f16f6a86e7609787a4b8225ec24d6fdc9d/pyobjc_framework_libdispatch-12.2.tar.gz", hash = "sha256:4a41879ef7716b73d70f2e40ff39353d686cbc59d48c93217ed362d2b2baf1ba", size = 40345, upload-time = "2026-05-30T12:39:09.474Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/0e/caee3281628ba4913206167062274334a62ba5dedb8dada5fd884a53584f/pyobjc_framework_libdispatch-12.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:fef3158dd4a068a9db8108a5cbf7da385788136e1d8af2e6fb7f82215016ecb2", size = 15679, upload-time = "2026-05-30T12:12:07.217Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/e0/ecf5fb9f11d12271818c5244c57d36ee654abfa2d15799bd594d4f58d931/pyobjc_framework_libdispatch-12.2-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:02dc66f1c11e25eceecf3c1b2b397f1727659dcac3e0c7b97784d5af3cfab491", size = 15960, upload-time = "2026-05-30T12:12:09.199Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/74/c1d1d1fc45434dcbab16887273d368d9ad89e65939babcffd502ed308ef9/pyobjc_framework_libdispatch-12.2-cp315-cp315-macosx_10_15_universal2.whl", hash = "sha256:a81d9329fdf5094c9bc09b916e1d2fb86ab27138161d3e7ddb76ec2e780a1aba", size = 15699, upload-time = "2026-05-30T12:12:11.103Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/46/6ba13e10cbac853af00ee37444f37826a0688e32d1d22ce2fde4e2add9d3/pyobjc_framework_libdispatch-12.2-cp315-cp315t-macosx_10_15_universal2.whl", hash = "sha256:8daaf8844b5b328cf8adb6e8c085bf2aad22237956f7c5dc6fbb7a46c5015af0", size = 15990, upload-time = "2026-05-30T12:12:13.077Z" },
+]
+
+[[package]]
+name = "pyopenssl"
+version = "26.0.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cryptography" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pyopenssl-26.0.0-py3-none-any.whl", hash = "sha256:df94d28498848b98cc1c0ffb8ef1e71e40210d3b0a8064c9d29571ed2904bf81" },
+]
+
+[[package]]
+name = "pyrfc3339"
+version = "2.1.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pyrfc3339-2.1.0-py3-none-any.whl", hash = "sha256:560f3f972e339f579513fe1396974352fd575ef27caff160a38b312252fcddf3" },
+]
+
+[[package]]
+name = "pyric"
+version = "0.1.6.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/PyRIC-0.1.6.3-py2.py3-none-any.whl", hash = "sha256:0ab6ee3288a1c6d05ca2bf44c221ef0893d874c470a50464b7b82eb61f4eab2e" },
+]
+
+[[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "six" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427" },
+]
+
+[[package]]
+name = "python-slugify"
+version = "8.0.4"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "text-unidecode" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8" },
+]
+
+[[package]]
+name = "pytz"
+version = "2026.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pytz-2026.2-py2.py3-none-any.whl", hash = "sha256:04156e608bee23d3792fd45c94ae47fae1036688e75032eea2e3bf0323d1f126" },
+]
+
+[[package]]
+name = "pyyaml"
+version = "6.0.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/pyyaml-6.0.3-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:7c6610def4f163542a622a73fb39f534f8c101d690126992300bf3207eab9764" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/pyyaml-6.0.3-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:5190d403f121660ce8d1d2c1bb2ef1bd05b5f68533fc5c2ea899bd15f4399b35" },
+]
+
+[[package]]
+name = "regex"
+version = "2026.5.9"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/regex-2026.5.9-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:24b2355ef5cc9aa5b8f07d17704face1c166fdcc2290fa7bd6e6c925655a8346" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/regex-2026.5.9-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:1e6da47d679b7010ef27556b6e0f99771b744936db1792a10ceac6547ae1503e" },
+]
+
+[[package]]
+name = "requests"
+version = "2.33.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "certifi" },
+    { name = "charset-normalizer" },
+    { name = "idna" },
+    { name = "urllib3" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/requests-2.33.1-py3-none-any.whl", hash = "sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a" },
+]
+
+[[package]]
+name = "ruff"
+version = "0.15.18"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/98/1295ad5a5aa9bc85bdcdfa5d82fe7b49c61af5657df4f227637ff9de0da6/ruff-0.15.18.tar.gz", hash = "sha256:2698a964c70e8bf402dcb99c8810472d270d141e7aa8c4e13599fd52033a2f33", size = 4761437, upload-time = "2026-06-18T18:25:39.224Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/d0/686e984941269621e2be72612d5c1e461f8f7b38415a2a7d7a81c8ae6715/ruff-0.15.18-py3-none-linux_armv6l.whl", hash = "sha256:8b6850172348c8381b8b3084c5915a4393c2373b9b54cd5b5e1ea15812bc10df", size = 10887308, upload-time = "2026-06-18T18:25:03.062Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/21/bc4123e3f5515ee99f8ce1eb93a14a0628fe4d1678663cd08f933ac16931/ruff-0.15.18-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:3fccc153a85417dcd976883160cacce486997b0a0058dd18f54b8aaaac7d1ce2", size = 11281305, upload-time = "2026-06-18T18:25:30.026Z" },
+    { url = "https://files.pythonhosted.org/packages/51/93/4769464c25cf7ab2acb3c7dda9cad3d867eb41c59565b3e2a9d17249c90c/ruff-0.15.18-py3-none-macosx_11_0_arm64.whl", hash = "sha256:08d4c86a68f2c3ec2c9d56380a71fb4a4f65373055cbb8caabd645e9102f38d4", size = 10641215, upload-time = "2026-06-18T18:25:15.802Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/42/56926d17120db2c208d76bf60a1a019644dd9e91dc27f0f95c9caddb1366/ruff-0.15.18-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:37e5108745c2c0705da916d7d4de533ddf547051ef45f62888c31bae73f66318", size = 10957224, upload-time = "2026-06-18T18:25:36.955Z" },
+    { url = "https://files.pythonhosted.org/packages/22/4f/d43fab8d8189afde803103022d000a8ef9f230616d436d52a8b2b8d63b50/ruff-0.15.18-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:56949a6ce8b3abde54c0bcb22cebfe57e8771cadc84b407ae8b8eaf67ebdcd43", size = 10699024, upload-time = "2026-06-18T18:25:05.707Z" },
+    { url = "https://files.pythonhosted.org/packages/63/42/1e3e4c68bd408b9768cf3e439acbe2c78245225faef253f7028a0cdb63e0/ruff-0.15.18-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:01a754cd6a1b630d3f97e33eb452cf7a98040482318e870f8bc52a5a30e62657", size = 11491458, upload-time = "2026-06-18T18:25:20.275Z" },
+    { url = "https://files.pythonhosted.org/packages/20/77/47a3484bea8521e14a203d98c389c5c97846675e4f02734672da4a69b52a/ruff-0.15.18-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6ba7a07e03a44dbf10bb086ee06705b173625014ec99f73a7e6836a5e5590a0c", size = 12383752, upload-time = "2026-06-18T18:25:22.535Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/ca/054159590787023d83b658a1a1819c4c8910114e7015069340b71c0961cb/ruff-0.15.18-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5a2c40a41a4cadbcf5897b548ab29dfe248b20c540961c0247d98a3973c70403", size = 11577923, upload-time = "2026-06-18T18:25:10.702Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/ff/d353d6b7bbd73cc0ec37f4463d7540e45e894338abdd9964eee0de332708/ruff-0.15.18-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5f0480ce690cbb6c4db6e5d08f19fce98e10ba131a8b60c1bcdac42771e3ae2d", size = 11583925, upload-time = "2026-06-18T18:25:32.391Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/4a/891f89b9c296ed3e5f3ece1a5629badc989d9a8fdaa30431aaf4774bc1c2/ruff-0.15.18-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:2330215f1f393fa8733f55edce04fcf94c36a2c460fcde31f78cc84e4951e9b1", size = 11582834, upload-time = "2026-06-18T18:25:27.309Z" },
+    { url = "https://files.pythonhosted.org/packages/32/a3/ed9e370154bf85de360b93c03026157f02d4943b2d01ff4945f4429f8e8a/ruff-0.15.18-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:a6aa6a3d979e48ae617578183674bf264fbe7d0114a796a26bd678d67963c7ff", size = 10927328, upload-time = "2026-06-18T18:25:34.676Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/d1/5cf5909329fedb5d39d555ee818ba5cf4638e1a301b89785d34f2905bfcb/ruff-0.15.18-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:a81beadbbff2c9c245561ae3f77b16709d87f35eec650d0501679239d3449b22", size = 10693187, upload-time = "2026-06-18T18:25:08.245Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/44/ff6c635cf2c4f4e7b618b6640da057376baa36014695487d88aed4794268/ruff-0.15.18-py3-none-musllinux_1_2_i686.whl", hash = "sha256:2186d9e940ae332ab293623a75b5f4fe49565f449954d50a72a046683aa6b809", size = 11208721, upload-time = "2026-06-18T18:25:41.327Z" },
+    { url = "https://files.pythonhosted.org/packages/88/d9/5baa2a30861adfb7022cf33c1e35b2fc18085b08c16f83eff4c7b99a5f48/ruff-0.15.18-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:5c2abf140438032bc77b2284a6c9944ecd8a19e5f1c7b52b1b8e4a0a80d19a7a", size = 11678599, upload-time = "2026-06-18T18:25:13.607Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/1a/0725a7cfdc32ff769efb96ee782bec882e16448c5d9e3be947ec4c04ce27/ruff-0.15.18-py3-none-win32.whl", hash = "sha256:02299e6e9fa5b297a3f6d5d10d7bcd655c925b028bb8b9d4588214549c6b9ec4", size = 10901903, upload-time = "2026-06-18T18:25:24.755Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/51/805d9f6fb7970505c3504794a5ec350f605361b807fef4dcf214ebd35e72/ruff-0.15.18-py3-none-win_amd64.whl", hash = "sha256:dac80dc8d26b2257dbefabed62f5d255c3937b4ccb122da1fc634794fa3578b3", size = 12041189, upload-time = "2026-06-18T18:25:17.915Z" },
+    { url = "https://files.pythonhosted.org/packages/29/4c/67bb45e41609eb4726f1bfeb59e083cf91d14c696d4bd14c234a980be93d/ruff-0.15.18-py3-none-win_arm64.whl", hash = "sha256:b2c9257fcbd4a3e5b977a1904e6facca016bafe2edc17df24db67cfaee03b4e4", size = 11329958, upload-time = "2026-06-18T18:25:43.686Z" },
+]
+
+[[package]]
+name = "s3transfer"
+version = "0.19.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "botocore" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/s3transfer-0.19.0-py3-none-any.whl", hash = "sha256:777cc2415536f1debadb5c2ef7779275d0fc0fe0e042411cdd6caebeb2685262" },
+]
+
+[[package]]
+name = "securetar"
+version = "2026.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pynacl" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/securetar-2026.2.0-py3-none-any.whl", hash = "sha256:34a41efa40be1eafaef02278b73f0cfb40599fb1b2cdc8b91b9e154579edfefb" },
+]
+
+[[package]]
+name = "sentence-stream"
+version = "1.3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "regex" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/sentence_stream-1.3.0-py3-none-any.whl", hash = "sha256:7448d131315b85eefdf238e5edd9caa62899acf609145d5e0e10c09812eb8a1d" },
+]
+
+[[package]]
+name = "six"
+version = "1.17.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274" },
+]
+
+[[package]]
+name = "snitun"
+version = "0.45.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "cryptography" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/snitun-0.45.1-py3-none-any.whl", hash = "sha256:c1fa4536320ec3126926ade775c429e20664db1bc61d8fec0e181dc393d36ab4" },
+]
+
+[[package]]
+name = "sqlalchemy"
+version = "2.0.41"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/sqlalchemy-2.0.41-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:38ced7d5368cb43f2adcb22c84eab59ca12137336b14560bb46a61c5d6921108" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/sqlalchemy-2.0.41-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:b55696deb119fecedd3bd124d0b438f81adff9facbb81257f8e86182e1dd3b4d" },
+]
+
+[[package]]
+name = "standard-aifc"
+version = "3.13.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "audioop-lts" },
+    { name = "standard-chunk" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/standard_aifc-3.13.0-py3-none-any.whl", hash = "sha256:f7ae09cc57de1224a0dd8e3eb8f73830be7c3d0bc485de4c1f82b4a7f645ac66" },
+]
+
+[[package]]
+name = "standard-chunk"
+version = "3.13.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/standard_chunk-3.13.0-py3-none-any.whl", hash = "sha256:17880a26c285189c644bd5bd8f8ed2bdb795d216e3293e6dbe55bbd848e2982c" },
+]
+
+[[package]]
+name = "standard-telnetlib"
+version = "3.13.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/standard_telnetlib-3.13.0-py3-none-any.whl", hash = "sha256:b268060a3220c80c7887f2ad9df91cd81e865f0c5052332b81d80ffda8677691" },
+]
+
+[[package]]
+name = "text-unidecode"
+version = "1.3"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8" },
+]
+
+[[package]]
+name = "tombi"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/c2/ccc7294d4189c3af509aa0cd3387c2fc6672c733ff417a88d31a931a518e/tombi-1.0.0.tar.gz", hash = "sha256:7819b14636df151f9b3c3cd0f32f536ac82e1b39f16a48e0793ff97f3d4d8cc6", size = 698155, upload-time = "2026-05-25T00:17:59.635Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/f1/c146b7476d769a23ce7a3f8bfa58b647da3a8824306f389b2f3308a19456/tombi-1.0.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:2ffaa5bdea64ed03930868a56a8d39617f260bb966514f40c7e8bfd8671abc70", size = 10474754, upload-time = "2026-05-25T00:17:50.251Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/59/47b78d929a08d5aeee9e83b8b0aecbf3a639451b80bb8dbc653398d1761e/tombi-1.0.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:d0a2e7de5d0821d492e24dfabef410bbefe8e9c64f5ae365838678e9eaf09caa", size = 10131281, upload-time = "2026-05-25T00:17:48.038Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/cc/37c1ce9e3aefc558eb24dd00c057170c4d18000629a2d6d98318066514bd/tombi-1.0.0-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:81a2c8c9864558ce0658b41461a7acc0f07688389dbff220319ede15e3d4e441", size = 10420772, upload-time = "2026-05-25T00:17:37.864Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/02/64f72ff7c1b05f3fa6d36e8286e9098cb44ef10e136455d27c049caf01e2/tombi-1.0.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ef742c9d21008239e605ec32d471660676d1d2d83d9de6adbd8b47d2a0f1e7c4", size = 11770421, upload-time = "2026-05-25T00:17:44.028Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/44/8030b08e4291a64e3a75160b194de158c40a1af4d4668c7b6555b823cb53/tombi-1.0.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6df71e90a145a483ce2e0d6075ec63b2324dc9d2424c54e809aec87ca5211efc", size = 11808925, upload-time = "2026-05-25T00:17:39.895Z" },
+    { url = "https://files.pythonhosted.org/packages/82/c8/a05d266d726f0e6fab2e71321809368fea6b9e7ad08835d1901b0e120908/tombi-1.0.0-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:09e862a25d5481fd1cc9eb2ae2baad3431f9a6fc323c106fe13a97bafeca9d4e", size = 10478330, upload-time = "2026-05-25T00:17:41.985Z" },
+    { url = "https://files.pythonhosted.org/packages/83/c7/547945e643c79479984609893c1d8ec7ffddf4b4af41a96dace5e0dd242a/tombi-1.0.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5b445777c4125aefb0e0e5a9cc5ef27a102ee2395e38d2333f89517a6dab5cb8", size = 10939148, upload-time = "2026-05-25T00:17:45.854Z" },
+    { url = "https://files.pythonhosted.org/packages/55/3a/91a9ce683f676c1b3d7b293ab87edb1d83087e58dc45f5f7370d5cc17c90/tombi-1.0.0-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:d888aef0c8e634acd20c5fd29a7e79a5b7e02a4a97a81486da51745e56545fed", size = 10672637, upload-time = "2026-05-25T00:17:35.126Z" },
+    { url = "https://files.pythonhosted.org/packages/94/dd/a387b96ea4cb94a0fa2d6d8944d40251eac442ddd50e5f7ba31551c8cc74/tombi-1.0.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:f236781fd45b3fb68788b9752b26941e444addf4dcf50b4e7fd7d548b980c1b8", size = 10706667, upload-time = "2026-05-25T00:17:51.939Z" },
+    { url = "https://files.pythonhosted.org/packages/18/ec/67150dd6c84caae7fed86d22eb36eaba07892d9bb2946a61d0e0d11bdbd8/tombi-1.0.0-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:eb67e63e90201023a53c36e7f03a8dcb142cfc00520010c02c0748c576b460ca", size = 10476189, upload-time = "2026-05-25T00:17:53.709Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/a3/5b28739c09a0f4b079e5a3a0f97241480a8a7d9e3c9861e56dca3d42e1c9/tombi-1.0.0-py3-none-musllinux_1_2_i686.whl", hash = "sha256:ec6b8fc3b1adda35b7b22e2c9238eea6b4f0736439c1bbddaa9645d49bb29997", size = 11172002, upload-time = "2026-05-25T00:17:55.65Z" },
+    { url = "https://files.pythonhosted.org/packages/37/ec/49c1b659c5ca24fae1bdab4b5b385f0494719415106e7411f16e1d3eaf92/tombi-1.0.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:ad8b184a4ffa73ccb8bedfc579bc61a13d2cde6ae29ffb64ab4c3dbfc8c2be61", size = 11184774, upload-time = "2026-05-25T00:17:57.651Z" },
+    { url = "https://files.pythonhosted.org/packages/33/d1/298f2a69449f14cbb99d96a28dee20977c712514e050f2de8e1968e6a7d8/tombi-1.0.0-py3-none-win32.whl", hash = "sha256:6d57de62153c8b387713a7276811944355c217fa197c2a6e4eb72883e21c8849", size = 8475523, upload-time = "2026-05-25T00:18:03.282Z" },
+    { url = "https://files.pythonhosted.org/packages/15/f0/b1595df6d9b628c4b9a0b587982b7b3afbf0e1e328bce35fd13cd744d554/tombi-1.0.0-py3-none-win_amd64.whl", hash = "sha256:ae4fc6832a3a5b6d7531f2064d7f45195a3a7c3709d648eceba150d35c76b14f", size = 9864716, upload-time = "2026-05-25T00:18:00.998Z" },
+]
+
+[[package]]
+name = "ty"
+version = "0.0.51"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/ce/352fcdba5c72ea20e5d2e46e28809cdb617575b71209d971eff2ace8e6c4/ty-0.0.51.tar.gz", hash = "sha256:b90172d46365bb9d51a7011cbb5c60cc4f514f42c86635df6c092b717f85e1ac", size = 5953151, upload-time = "2026-06-19T01:48:58.015Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2b/8f/8fe7cab79a45320b2cdcd602f16d44c8108d2f418ff7ec316c6212f1f0cc/ty-0.0.51-py3-none-linux_armv6l.whl", hash = "sha256:947986bd82d324b3a5c58ce03f1dad160cdf36443d3e8f64b3484b861ba9bc64", size = 11884805, upload-time = "2026-06-19T01:48:20.184Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/b4/56fdc39a3f44c0564fd157e1e59e1f9c3fc5ba57ae4472ded85c67c63d74/ty-0.0.51-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:25a5b31e6f23fd5dc63ad29087ded09932409e4154e2fe07bbaed015035990bb", size = 11633593, upload-time = "2026-06-19T01:48:22.998Z" },
+    { url = "https://files.pythonhosted.org/packages/33/57/136e83f24fc04f5afdcabff42f40fa27eae5ac3f0e3f12627d072a55f679/ty-0.0.51-py3-none-macosx_11_0_arm64.whl", hash = "sha256:2faed19a8f1505370de071c008df52a994fc03a204f3267c3a33a32ca26f854f", size = 11063076, upload-time = "2026-06-19T01:48:25.223Z" },
+    { url = "https://files.pythonhosted.org/packages/32/f8/5d32f0df5692446440ab781b9b119aa3e0c0dbfa78c583fe9be8417d54fa/ty-0.0.51-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:08adbe53fb8bc9e7f00e89bf1d3c875a02cda76d83f109d2e6ab1ff35a7bfa8c", size = 11579542, upload-time = "2026-06-19T01:48:27.302Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/0c/4f54ef338e9623886809ecd508931b0cd5b3aba1e591586a2f6aeaa8bd11/ty-0.0.51-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:dc5e93695ab5dcbf1eef663aee60ec23a413547cc9cb06adcb0d842e9166bd0f", size = 11676189, upload-time = "2026-06-19T01:48:29.518Z" },
+    { url = "https://files.pythonhosted.org/packages/56/27/31729066f9b9d3596941edaf267894eefc0b30df4518f003dba5f7276258/ty-0.0.51-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:abd92913bc90d1705ef9391ff8c6822b61e2e827fa295eb30bf0dfabcf815645", size = 12188154, upload-time = "2026-06-19T01:48:31.68Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/38/d4301aa12d2283c7130908baf1417a37dfe3e10f5669cb4ce2853c2540b4/ty-0.0.51-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:429a997394dac73870d71b87cc90efc54da3efaf319e72ca18aeef35a78aef90", size = 12780597, upload-time = "2026-06-19T01:48:33.839Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/52/4b2e67e53f126d39abe201bd2299e467e27463a284e965ad195cbc217fa0/ty-0.0.51-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:62d94f06e8c317e89b6884f2bde443040e596b88c7c79bd944c84c105b06257a", size = 12491115, upload-time = "2026-06-19T01:48:36.169Z" },
+    { url = "https://files.pythonhosted.org/packages/74/50/aabfe55c132ebe72b4d639cbf772d931e11b0990d29c1f691922b6ccabc1/ty-0.0.51-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f8f52952cff665bc52a36147e610c10f5699d30007d7a14ab7f345cff93476ff", size = 12230135, upload-time = "2026-06-19T01:48:38.445Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/1b/9aa428052dbed91c50919cd080426a313cf20ce14c6bfe2b71345e548671/ty-0.0.51-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:c1bd1355aee86af01e4e21b0bc16fc460fb05905761f0d8b8d70841de0feade8", size = 12468123, upload-time = "2026-06-19T01:48:40.47Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/5a/f6ce69f2575259386c950c40e02578d0902760cb61f95045e9971182c24e/ty-0.0.51-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:79d1877e93460f936bc10ed1a31525702b7ce51075763ccba993be17f0b9e905", size = 11541672, upload-time = "2026-06-19T01:48:42.635Z" },
+    { url = "https://files.pythonhosted.org/packages/35/3a/2af48924a683e959e95e5cc4dc88e5a8595206a0812b869032b95196f2b0/ty-0.0.51-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:cc233a6235fb23e2a44b14731a10043e37ba2f30f2c361cf49ad3633c5b9da9c", size = 11694015, upload-time = "2026-06-19T01:48:44.819Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/12/899875d8a60b198c8121cb92ce18e18cc072d23ca2130fcdaa176383ef72/ty-0.0.51-py3-none-musllinux_1_2_i686.whl", hash = "sha256:bc7459348a253247bbfb2669a021e614281b86bbea24c36112b8a6e1a2499a16", size = 11832856, upload-time = "2026-06-19T01:48:47.028Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/a2/88f681d826d97cc96ef9f6cadd4935f775758944cee07340aa46113bce28/ty-0.0.51-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:49a21237f6fd1de56beaff0a3e85fe022a09a3401e67e3abec41ce838a5d4d2e", size = 12333449, upload-time = "2026-06-19T01:48:49.091Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/61/535a4163b4452c6978c31fedfd7b5803cf3a2253e9455cde350f86638d6a/ty-0.0.51-py3-none-win32.whl", hash = "sha256:61b4b6a003c3ebe53a63a1125c9b6542aa01bc1b6c9a235d01ee328d000d61a9", size = 11177338, upload-time = "2026-06-19T01:48:51.433Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/4d/2334fbb74291a20129fa7aaa8f789619ec9b6883b27f997b8baa27e4674f/ty-0.0.51-py3-none-win_amd64.whl", hash = "sha256:608d417cd1eaf79bcbd713d9830d5e3db9d57ec225c3af3e4ac9a9ff66b45d70", size = 12325675, upload-time = "2026-06-19T01:48:53.774Z" },
+    { url = "https://files.pythonhosted.org/packages/50/b5/d49096cd5f3694becb86a5a6ccd0f229ead695fc7430d6bc4dd0a104c6fe/ty-0.0.51-py3-none-win_arm64.whl", hash = "sha256:62ced5e380284f12b2dc4802a3e4ed3dac39913fc6719afde7978814a4c7f169", size = 11657350, upload-time = "2026-06-19T01:48:55.904Z" },
+]
+
+[[package]]
+name = "typing-extensions"
+version = "4.15.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548" },
+]
+
+[[package]]
+name = "tzdata"
+version = "2026.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/tzdata-2026.2-py2.py3-none-any.whl", hash = "sha256:bbe9af844f658da81a5f95019480da3a89415801f6cc966806612cc7169bffe7" },
+]
+
+[[package]]
+name = "uart-devices"
+version = "0.1.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/uart_devices-0.1.1-py3-none-any.whl", hash = "sha256:55bc8cce66465e90b298f0910e5c496bc7be021341c5455954cf61c6253dc123" },
+]
+
+[[package]]
+name = "ulid-transform"
+version = "2.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/ulid_transform-2.2.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:41d05fd5191c01a751d222586a88945806573b036a4a31b14952834c3e085654" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/ulid_transform-2.2.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:8779b38f6a0c788087990c4c54ae9034beef4117936a5dd1a2d43b8cbb4f3203" },
+]
+
+[[package]]
+name = "urllib3"
+version = "2.7.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897" },
+]
+
+[[package]]
+name = "usb-devices"
+version = "0.5.1"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/usb_devices-0.5.1-py3-none-any.whl", hash = "sha256:e77e7972b5ac6a883b3778b0273d9582c5b8ae847ac78fba3d080dd4a4cc69ad" },
+]
+
+[[package]]
+name = "uv"
+version = "0.11.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/e9/691eb77e5e767cdec695db3f91ec259bbb66f9af7c86a8dbe462ef72a120/uv-0.11.1.tar.gz", hash = "sha256:8aa7e4983fabb06d0ba58e8b8c969d568ce495ad5f2f0426af97b55720f0dee1", size = 4007244, upload-time = "2026-03-24T23:14:18.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/f9/a95c44fba785c27a966087154a8f6825774d49a38b3c5cd35f80e07ca5ca/uv-0.11.1-py3-none-linux_armv6l.whl", hash = "sha256:424b5b412d37838ea6dc11962f037be98b92e83c6ec755509e2af8a4ca3fbf2a", size = 23320598, upload-time = "2026-03-24T23:13:44.998Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/de/b7e24956a2508debf2addefcad93c72165069370f914d90db6264e0cf96a/uv-0.11.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c2133b0532af0217bf252d981bded8bff0c770f174f91f20655f88705f28c03f", size = 22832732, upload-time = "2026-03-24T23:13:33.677Z" },
+    { url = "https://files.pythonhosted.org/packages/93/bd/1ac91bc704c22a427a44262f09e208ae897817a856d0e8dc0d60e4032e92/uv-0.11.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:1a7b74e5a15b9bc6e61ce807adeca5a2807f557d3f06a5586de1da309d844c1d", size = 21406409, upload-time = "2026-03-24T23:14:32.231Z" },
+    { url = "https://files.pythonhosted.org/packages/34/1d/f767701e1160538d25ee6c1d49ce1e72442970b6658365afdd57339d10e0/uv-0.11.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:fb1f32ec6c7dffb7ae71afaf6bf1defca0bd20a73a25e61226210c0a3e8bb13d", size = 23154066, upload-time = "2026-03-24T23:14:07.334Z" },
+    { url = "https://files.pythonhosted.org/packages/55/21/d2cfa3571557ba68ffd530656b1d7159fe59a6b01be94595351b1eec1c29/uv-0.11.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:0d5cf3c1c96f8afd67072d80479a58c2d69471916bac4ac36cc55f2aa025dc8e", size = 22922490, upload-time = "2026-03-24T23:13:25.83Z" },
+    { url = "https://files.pythonhosted.org/packages/59/3c/68119f555b2ec152235951cc9aa0f40006c5f03d17c98adaab6a3d36d42b/uv-0.11.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:5829a254c64b19420b9e48186182d162b01f8da0130e770cbb8851fd138bb820", size = 22923054, upload-time = "2026-03-24T23:14:03.595Z" },
+    { url = "https://files.pythonhosted.org/packages/70/ce/0df944835519372b1d698acaa388baa874cf69a6183b5f0980cb8855b81a/uv-0.11.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d4259027e80f4dcc9ae3dceddcd5407173d334484737166fc212e96bb760d6ea", size = 24576177, upload-time = "2026-03-24T23:14:25.263Z" },
+    { url = "https://files.pythonhosted.org/packages/db/04/0076335413c618fe086e5a4762103634552e638a841e12a4bb8f5137d710/uv-0.11.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:b6169eb49d1d2b5df7a7079162e1242e49ad46c6590c55f05b182fa526963763", size = 25207026, upload-time = "2026-03-24T23:14:11.579Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/57/79c0479e12c2291ad9777be53d813957fa38283975b708eead8e855ba725/uv-0.11.1-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:c96a7310a051b1013efffe082f31d718bce0538d4abc20a716d529bf226b7c44", size = 24393748, upload-time = "2026-03-24T23:13:48.553Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/25/9ef73c8b6ef04b0cead7d8f1547034568e3e58f3397b55b83167e587f84a/uv-0.11.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:41ccc438dbb905240a3630265feb25be1bda61656ec7c32682a83648a686f4aa", size = 24518525, upload-time = "2026-03-24T23:13:41.129Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/a3/035c7c2feb2139efb5d70f2e9f68912c34f7d92ee2429bacd708824483bb/uv-0.11.1-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:44f528ba3d66321cea829770982cccb14af142203e4e19d00ff0c23b28e3cd33", size = 23270167, upload-time = "2026-03-24T23:13:51.937Z" },
+    { url = "https://files.pythonhosted.org/packages/25/59/2dd782b537bfd1e41cb06de4f4a529fe2f9bd10034fb3fcce225ec86c1a5/uv-0.11.1-py3-none-manylinux_2_31_riscv64.musllinux_1_1_riscv64.whl", hash = "sha256:4fcc3d5fdea24181d77e7765bf9d16cdd9803fd524820c62c66f91b2e2644d5b", size = 24011976, upload-time = "2026-03-24T23:13:37.402Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/f0/9983e6f31d495cc548f1e211cab5b89a3716f406a2d9d8134b8245ec103c/uv-0.11.1-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:5de9e43a32079b8d57093542b0cd8415adba5ed9944fa49076c0927f3ff927e1", size = 24029605, upload-time = "2026-03-24T23:14:28.819Z" },
+    { url = "https://files.pythonhosted.org/packages/19/dc/9c59e803bfc1b9d6c4c4b7374689c688e9dc0a1ecc2375399d3a59fd4a58/uv-0.11.1-py3-none-musllinux_1_1_i686.whl", hash = "sha256:f13ae98a938effae5deb587a63e7e42f05d6ba9c1661903ef538e4e87b204f8c", size = 23702811, upload-time = "2026-03-24T23:14:21.207Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/77/b1cbfdac0b2dd3e7aa420e9dad1abe8badb47eabd8741a9993586b14f8dc/uv-0.11.1-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:57d38e8b6f6937e1521da568adf846bb89439c73e146e89a8ab2cfe7bb15657a", size = 24714239, upload-time = "2026-03-24T23:13:29.814Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/d3/94917751acbbb5e053cb366004ae8be3c9664f82aef7de54f55e38ec15cb/uv-0.11.1-py3-none-win32.whl", hash = "sha256:36f4552b24acaa4699b02baeb1bb928202bb98d426dcc5041ab7ebae082a6430", size = 22404606, upload-time = "2026-03-24T23:13:55.614Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/87/8dadfe03944a4a493cd58b6f4f13e5181069a0048aeb2fae7da2c587a542/uv-0.11.1-py3-none-win_amd64.whl", hash = "sha256:d6a1c4cdb1064e9ceaa59e89a7489dd196222a0b90cfb77ca37a909b5e024ea0", size = 24850092, upload-time = "2026-03-24T23:14:15.186Z" },
+    { url = "https://files.pythonhosted.org/packages/38/1b/dad559273df0c8263533afa4a28570cf6804272f379df9830b528a9cf8bc/uv-0.11.1-py3-none-win_arm64.whl", hash = "sha256:3bc9632033c7a280342f9b304bd12eccb47d6965d50ea9ee57ecfaf4f1f393c4", size = 23376127, upload-time = "2026-03-24T23:13:59.59Z" },
+]
+
+[[package]]
+name = "voluptuous"
+version = "0.15.2"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/voluptuous-0.15.2-py3-none-any.whl", hash = "sha256:016348bc7788a9af9520b1764ebd4de0df41fe2138ebe9e06fa036bf86a65566" },
+]
+
+[[package]]
+name = "voluptuous-openapi"
+version = "0.2.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "voluptuous" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/voluptuous_openapi-0.2.0-py3-none-any.whl", hash = "sha256:d51f07be8af44b11570b7366785d90daa716b7fd11ea2845803763ae551f35cf" },
+]
+
+[[package]]
+name = "voluptuous-serialize"
+version = "2.7.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "voluptuous" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/voluptuous_serialize-2.7.0-py3-none-any.whl", hash = "sha256:ee3ebecace6136f38d0bf8c20ee97155db2486c6b2d0795563fafd04a519e76f" },
+]
+
+[[package]]
+name = "webrtc-models"
+version = "0.3.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "mashumaro" },
+    { name = "orjson" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/webrtc_models-0.3.0-py3-none-any.whl", hash = "sha256:8fddded3ffd7ca837de878033501927580799a2c1b7829f7ae8a0f43b49004ea" },
+]
+
+[[package]]
+name = "winrt-runtime"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/dd/acdd527c1d890c8f852cc2af644aa6c160974e66631289420aa871b05e65/winrt_runtime-3.2.1.tar.gz", hash = "sha256:c8dca19e12b234ae6c3dadf1a4d0761b51e708457492c13beb666556958801ea", size = 21721, upload-time = "2025-06-06T14:40:27.593Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c8/87/88bd98419a9da77a68e030593fee41702925a7ad8a8aec366945258cbb31/winrt_runtime-3.2.1-cp314-cp314-win32.whl", hash = "sha256:9b6298375468ac2f6815d0c008a059fc16508c8f587e824c7936ed9216480dad", size = 210257, upload-time = "2025-09-20T07:06:41.054Z" },
+    { url = "https://files.pythonhosted.org/packages/87/85/e5c2a10d287edd9d3ee8dc24bf7d7f335636b92bf47119768b7dd2fd1669/winrt_runtime-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:e36e587ab5fd681ee472cd9a5995743f75107a1a84d749c64f7e490bc86bc814", size = 241873, upload-time = "2025-09-20T07:06:42.059Z" },
+    { url = "https://files.pythonhosted.org/packages/52/2a/eb9e78397132175f70dd51dfa4f93e489c17d6b313ae9dce60369b8d84a7/winrt_runtime-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:35d6241a2ebd5598e4788e69768b8890ee1eee401a819865767a1fbdd3e9a650", size = 416222, upload-time = "2025-09-20T07:06:43.376Z" },
+]
+
+[[package]]
+name = "winrt-windows-devices-bluetooth"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/a0/1c8a0c469abba7112265c6cb52f0090d08a67c103639aee71fc690e614b8/winrt_windows_devices_bluetooth-3.2.1.tar.gz", hash = "sha256:db496d2d92742006d5a052468fc355bf7bb49e795341d695c374746113d74505", size = 23732, upload-time = "2025-06-06T14:41:20.489Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/95/91cfdf941a1ba791708ab3477fc4e46793c8fe9117fc3e0a8c5ac5d7a09c/winrt_windows_devices_bluetooth-3.2.1-cp314-cp314-win32.whl", hash = "sha256:de36ded53ca3ba12fc6dd4deb14b779acc391447726543815df4800348aad63a", size = 109015, upload-time = "2025-09-20T07:09:51.067Z" },
+    { url = "https://files.pythonhosted.org/packages/61/fa/7460655628d0f340a93524f5236bb9f8514eb0e1d334b38cba8a89f6c1a6/winrt_windows_devices_bluetooth-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:3295d932cc93259d5ccb23a41e3a3af4c78ce5d6a6223b2b7638985f604fa34c", size = 115931, upload-time = "2025-09-20T07:09:51.922Z" },
+    { url = "https://files.pythonhosted.org/packages/de/70/e1248dea2ab881eb76b61ff1ad6cb9c07ac005faf99349e4af0b29bc3f1b/winrt_windows_devices_bluetooth-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:1f61c178766a1bbce0669f44790c6161ff4669404c477b4aedaa576348f9e102", size = 109561, upload-time = "2025-09-20T07:09:52.733Z" },
+]
+
+[[package]]
+name = "winrt-windows-devices-bluetooth-advertisement"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/fc/7ffe66ca4109b9e994b27c00f3d2d506e6e549e268791f755287ad9106d8/winrt_windows_devices_bluetooth_advertisement-3.2.1.tar.gz", hash = "sha256:0223852a7b7fa5c8dea3c6a93473bd783df4439b1ed938d9871f947933e574cc", size = 16906, upload-time = "2025-06-06T14:41:21.448Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/3d/421d04a20037370baf13de929bc1dc5438b306a76fe17275ec5d893aae6c/winrt_windows_devices_bluetooth_advertisement-3.2.1-cp314-cp314-win32.whl", hash = "sha256:2985565c265b3f9eab625361b0e40e88c94b03d89f5171f36146f2e88b3ee214", size = 92264, upload-time = "2025-09-20T07:09:53.563Z" },
+    { url = "https://files.pythonhosted.org/packages/07/c7/43601ab82fe42bcff430b8466d84d92b31be06cc45c7fd64e9aac40f7851/winrt_windows_devices_bluetooth_advertisement-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:d102f3fac64fde32332e370969dfbc6f37b405d8cc055d9da30d14d07449a3c2", size = 97517, upload-time = "2025-09-20T07:09:54.411Z" },
+    { url = "https://files.pythonhosted.org/packages/91/17/e3303f6a25a2d98e424b06580fc85bbfd068f383424c67fa47cb1b357a46/winrt_windows_devices_bluetooth_advertisement-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:ffeb5e946cd42c32c6999a62e240d6730c653cdfb7b49c7839afba375e20a62a", size = 94122, upload-time = "2025-09-20T07:09:55.187Z" },
+]
+
+[[package]]
+name = "winrt-windows-devices-bluetooth-genericattributeprofile"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/44/21/aeeddc0eccdfbd25e543360b5cc093233e2eab3cdfb53ad3cabae1b5d04d/winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1.tar.gz", hash = "sha256:cdf6ddc375e9150d040aca67f5a17c41ceaf13a63f3668f96608bc1d045dde71", size = 38896, upload-time = "2025-06-06T14:41:22.687Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/32/cb447ca7730a1e05730272309b074da6a04af29a8c0f5121014db8a2fc02/winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp314-cp314-win32.whl", hash = "sha256:d5f83739ca370f0baf52b0400aebd6240ab80150081fbfba60fd6e7b2e7b4c5f", size = 185249, upload-time = "2025-09-20T07:09:58.639Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/fa/f465d5d44dda166bf7ec64b7a950f57eca61f165bfe18345e9a5ea542def/winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:13786a5853a933de140d456cd818696e1121c7c296ae7b7af262fc5d2cffb851", size = 193739, upload-time = "2025-09-20T07:09:59.893Z" },
+    { url = "https://files.pythonhosted.org/packages/78/08/51c53ac3c704cd92da5ed7e7b9b57159052f6e46744e4f7e447ed708aa22/winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:5140682da2860f6a55eb6faf9e980724dc457c2e4b4b35a10e1cebd8fc97d892", size = 194836, upload-time = "2025-09-20T07:10:00.87Z" },
+]
+
+[[package]]
+name = "winrt-windows-devices-enumeration"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9e/dd/75835bfbd063dffa152109727dedbd80f6e92ea284855f7855d48cdf31c9/winrt_windows_devices_enumeration-3.2.1.tar.gz", hash = "sha256:df316899e39bfc0ffc1f3cb0f5ee54d04e1d167fbbcc1484d2d5121449a935cf", size = 23538, upload-time = "2025-06-06T14:41:26.787Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/41/31/5785cd1ec54dc0f0e6f3e6a466d07a62b8014a6e2b782e80444ef87e83ab/winrt_windows_devices_enumeration-3.2.1-cp314-cp314-win32.whl", hash = "sha256:e087364273ed7c717cd0191fed4be9def6fdf229fe9b536a4b8d0228f7814106", size = 134252, upload-time = "2025-09-20T07:10:12.935Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/f6/68d91068048410f49794c0b19c45759c63ca559607068cfe5affba2f211b/winrt_windows_devices_enumeration-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:0da1ddb8285d97a6775c36265d7157acf1bbcb88bcc9a7ce9a4549906c822472", size = 145509, upload-time = "2025-09-20T07:10:13.797Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/a4/898951d5bfc474aa9c7d133fe30870f0f2184f4ba3027eafb779d30eb7bc/winrt_windows_devices_enumeration-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:09bf07e74e897e97a49a9275d0a647819254ddb74142806bbbcf4777ed240a22", size = 141334, upload-time = "2025-09-20T07:10:14.637Z" },
+]
+
+[[package]]
+name = "winrt-windows-devices-radios"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5e/02/9704ea359ad8b0d6faa1011f98fb477e8fb6eac5201f39d19e73c2407e7b/winrt_windows_devices_radios-3.2.1.tar.gz", hash = "sha256:4dc9b9d1501846049eb79428d64ec698d6476c27a357999b78a8331072e18a0b", size = 5908, upload-time = "2025-06-06T14:41:44.868Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/79/4627afae6b389ddd1e5f1d691663c6b14d6c8f98959082aed1217cc57ef9/winrt_windows_devices_radios-3.2.1-cp314-cp314-win32.whl", hash = "sha256:21452e1cae50e44cd1d5e78159e1b9986ac3389b66458ad89caa196ce5eca2d6", size = 39521, upload-time = "2025-09-20T07:11:17.992Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/7c/c6aea91908ee7279ed51d12157bc8aeecb8850af2441073c3c91b261ad31/winrt_windows_devices_radios-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:6a8413e586fe597c6849607885cca7e0549da33ae5699165d11f7911534c6eaf", size = 41121, upload-time = "2025-09-20T07:11:18.747Z" },
+    { url = "https://files.pythonhosted.org/packages/86/c5/652f14e3c501452ad8e0723518d9bbd729219b47f4a4dbe2966c2f82dca8/winrt_windows_devices_radios-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:39129fd9d09103adb003575f59881c1a5a70a43310547850150b46c6f4020312", size = 38114, upload-time = "2025-09-20T07:11:19.599Z" },
+]
+
+[[package]]
+name = "winrt-windows-foundation"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/55/098ce7ea0679efcc1298b269c48768f010b6c68f90c588f654ec874c8a74/winrt_windows_foundation-3.2.1.tar.gz", hash = "sha256:ad2f1fcaa6c34672df45527d7c533731fdf65b67c4638c2b4aca949f6eec0656", size = 30485, upload-time = "2025-06-06T14:41:53.344Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/0a/d77346e39fe0c81f718cde49f83fe77c368c0e14c6418f72dfa1e7ef22d0/winrt_windows_foundation-3.2.1-cp314-cp314-win32.whl", hash = "sha256:35e973ab3c77c2a943e139302256c040e017fd6ff1a75911c102964603bba1da", size = 114590, upload-time = "2025-09-20T07:11:49.97Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/56/4d2b545bea0f34f68df6d4d4ca22950ff8a935497811dccdc0ca58737a05/winrt_windows_foundation-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:a22a7ebcec0d262e60119cff728f32962a02df60471ded8b2735a655eccc0ef5", size = 122148, upload-time = "2025-09-20T07:11:50.826Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/ed/b9d3a11cac73444c0a3703200161cd7267dab5ab85fd00e1f965526e74a8/winrt_windows_foundation-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:3be7fbae829b98a6a946db4fbaf356b11db1fbcbb5d4f37e7a73ac6b25de8b87", size = 114360, upload-time = "2025-09-20T07:11:51.626Z" },
+]
+
+[[package]]
+name = "winrt-windows-foundation-collections"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/62/d21e3f1eeb8d47077887bbf0c3882c49277a84d8f98f7c12bda64d498a07/winrt_windows_foundation_collections-3.2.1.tar.gz", hash = "sha256:0eff1ad0d8d763ad17e9e7bbd0c26a62b27215016393c05b09b046d6503ae6d5", size = 16043, upload-time = "2025-06-06T14:41:53.983Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/47/b3301d964422d4611c181348149a7c5956a2a76e6339de451a000d4ae8e7/winrt_windows_foundation_collections-3.2.1-cp314-cp314-win32.whl", hash = "sha256:33188ed2d63e844c8adfbb82d1d3d461d64aaf78d225ce9c5930421b413c45ab", size = 62211, upload-time = "2025-09-20T07:11:52.411Z" },
+    { url = "https://files.pythonhosted.org/packages/20/59/5f2c940ff606297129e93ebd6030c813e6a43a786de7fc33ccb268e0b06b/winrt_windows_foundation_collections-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:d4cfece7e9c0ead2941e55a1da82f20d2b9c8003bb7a8853bb7f999b539f80a4", size = 70399, upload-time = "2025-09-20T07:11:53.254Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/2d/2c8eb89062c71d4be73d618457ed68e7e2ba29a660ac26349d44fc121cbf/winrt_windows_foundation_collections-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:3884146fea13727510458f6a14040b7632d5d90127028b9bfd503c6c655d0c01", size = 61392, upload-time = "2025-09-20T07:11:53.993Z" },
+]
+
+[[package]]
+name = "winrt-windows-storage-streams"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "winrt-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/50/f4488b07281566e3850fcae1021f0285c9653992f60a915e15567047db63/winrt_windows_storage_streams-3.2.1.tar.gz", hash = "sha256:476f522722751eb0b571bc7802d85a82a3cae8b1cce66061e6e758f525e7b80f", size = 34335, upload-time = "2025-06-06T14:43:23.905Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/70/2869ea2112c565caace73c9301afd1d7afcc49bdd37fac058f0178ba95d4/winrt_windows_storage_streams-3.2.1-cp314-cp314-win32.whl", hash = "sha256:5cd0dbad86fcc860366f6515fce97177b7eaa7069da261057be4813819ba37ee", size = 131701, upload-time = "2025-09-20T07:17:16.849Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/3d/aae50b1d0e37b5a61055759aedd42c6c99d7c17ab8c3e568ab33c0288938/winrt_windows_storage_streams-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:3c5bf41d725369b9986e6d64bad7079372b95c329897d684f955d7028c7f27a0", size = 135566, upload-time = "2025-09-20T07:17:17.69Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/c3/6d3ce7a58e6c828e0795c9db8790d0593dd7fdf296e513c999150deb98d4/winrt_windows_storage_streams-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:293e09825559d0929bbe5de01e1e115f7a6283d8996ab55652e5af365f032987", size = 134393, upload-time = "2025-09-20T07:17:18.802Z" },
+]
+
+[[package]]
+name = "yarl"
+version = "1.23.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "idna" },
+    { name = "multidict" },
+    { name = "propcache" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/yarl-1.23.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:548d1845947420a76b6451cd7c732e3631f786af3797802b72da146d6753d75b" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/yarl-1.23.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:f0fdfbd86c9d680410325711167072ff4c8b31f70ce71cac1d84b4a69e29135e" },
+]
+
+[[package]]
+name = "zeroconf"
+version = "0.148.0"
+source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
+dependencies = [
+    { name = "ifaddr" },
+]
+wheels = [
+    { url = "https://wheels.home-assistant.io/musllinux-index/zeroconf-0.148.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:ece6f030cc7a771199760963c11ce4e77ed95011eedffb1ca5186247abfec24a" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/zeroconf-0.148.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:ab8e687255cf54ebeae7ede6a8be0566aec752c570e16dbea84b3f9b149ba829" },
+]

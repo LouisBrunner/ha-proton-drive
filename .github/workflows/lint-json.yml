@@ -1,0 +1,37 @@
+name: Lint JSON
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.json"
+      - .github/workflows/lint-json.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**/*.json"
+      - .github/workflows/lint-json.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  json:
+    name: JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Biome
+        uses: biomejs/setup-biome@0d181e85625cb7dafc75257719de900eda7393c6 # v2.7.1
+        with:
+          version: 2.5.0
+
+      - name: Lint and format JSON files
+        run: biome ci .

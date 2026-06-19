@@ -1,6 +1,6 @@
 # Proton Drive
 
- Proton Drive integration for Home Assistant (compatible with HACS).
+Proton Drive integration for Home Assistant (compatible with HACS).
 
 ## Installation
 
@@ -15,29 +15,29 @@
 Start the devcontainer with:
 
 ```bash
-docker compose up --build
+make devcontainer-start
 ```
 
 Then connect to the container in another terminal:
 
 ```bash
-docker compose exec -it devcontainer bash
+make devcontainer
 ```
 
 You can then setup the dependencies using
 
 ```bash
-./scripts/setup
+make docker-setup
 ```
 
 then start running HA (available at http://localhost:8123) with the integration:
 
 ```bash
-./scripts/develop
+make docker-dev
 ```
 
 Finally you can lint the integration using:
 
 ```bash
-./scripts/lint
+make vet
 ```
