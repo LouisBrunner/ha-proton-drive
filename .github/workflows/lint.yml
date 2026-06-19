@@ -3,10 +3,10 @@ name: Lint
 on:
   push:
     branches:
-      - "main"
+      - main
   pull_request:
     branches:
-      - "main"
+      - main
 
 permissions: {}
 
@@ -16,74 +16,36 @@ concurrency:
 
 jobs:
   vet:
-    name: "Vet"
-    runs-on: "ubuntu-latest"
+    name: Vet
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --group local
+        run: uv sync --group hass
 
       - name: Vet
         run: make vet
 
   manifest-sync:
-    name: "Manifest sync"
-    runs-on: "ubuntu-latest"
+    name: Manifest sync
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
 
       - name: Check manifest sync
         run: |
           make manifest-sync
           git diff --exit-code custom_components/proton_drive/manifest.json || (echo "manifest.json is out of sync, run 'make manifest-sync' to fix" && exit 1)
-
-  yaml:
-    name: "YAML"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Lint YAML files
-        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3.1.1
-        with:
-          file_or_dir: ".github docker-compose.yaml"
-          config_data: |
-            extends: default
-            rules:
-              line-length:
-                max: 120
-                level: warning
-              document-start: disable
-              truthy: disable
-
-  toml:
-    name: "TOML"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Validate TOML files
-        run: python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"
-
-  json:
-    name: "JSON"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Validate JSON files
-        run: |
-          python3 -m json.tool hacs.json > /dev/null
-          python3 -m json.tool custom_components/proton_drive/manifest.json > /dev/null

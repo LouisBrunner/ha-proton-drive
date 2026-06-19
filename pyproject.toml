@@ -9,9 +9,9 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff==0.15.18", "ty==0.0.51"]
-docker = ["homeassistant==2026.4.0"]
-local = ["homeassistant-stubs==2026.4.0"]
+dev = ["ruff==0.15.18", "tombi==1", "ty==0.0.51"]
+docker = ["aiohasupervisor==0.4.3"]
+hass = ["homeassistant==2026.4.0"]
 
 [tool.ruff]
 target-version = "py314"
@@ -36,5 +36,13 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "scripts/*.py" = ["T201"]
 
+[tool.setuptools]
+packages = ["custom_components"]
+
 [tool.uv]
 package = false
+index-strategy = "unsafe-best-match"
+
+[[tool.uv.index]]
+name = "hass-musl"
+url = "https://wheels.home-assistant.io/musllinux-index/"

@@ -99,9 +99,10 @@ class ProtonCLI:
             raise CLIStartupError(str(e)) from e
 
     @classmethod
-    def __get_platform(cls) -> tuple[str, str]:
+    async def __get_platform(cls) -> tuple[str, str]:
         machine = platform.machine().lower()
-        variant = "musl" if any(Path("/lib").glob("ld-musl-*.so*")) else "glibc"
+        is_musl = any(e.name.startswith("ld-musl-") for e in await aiofiles.os.scandir("/lib"))
+        variant = "musl" if is_musl else "glibc"
         if machine in ("arm64", "aarch64"):
             arch = "arm64"
         elif machine in ("x86_64", "amd64"):
@@ -113,7 +114,7 @@ class ProtonCLI:
 
     @classmethod
     async def __download(cls, _hass: HomeAssistant, dest: Path) -> None:
-        variant, arch = cls.__get_platform()
+        variant, arch = await cls.__get_platform()
 
         url = CLI_BASE_URL_FORMAT[variant].format(arch=arch, version=CLI_VERSION)
 
@@ -160,7 +161,7 @@ class ProtonCLI:
         return aiohttp.ClientSession(connector=connector, timeout=timeout)
 
     async def __is_valid(self, path: Path) -> bool:
-        variant, arch = self.__get_platform()
+        variant, arch = await self.__get_platform()
         try:
             await self.__verify_checksum(path, variant, arch)
         except CLIStartupError:

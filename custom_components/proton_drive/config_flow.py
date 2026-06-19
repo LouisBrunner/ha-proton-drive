@@ -175,7 +175,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the reauthentication user step."""
         return await self.async_step_auth_user()
 
-    async def async_step_after_auth(self) -> config_entries.ConfigFlowResult:
+    async def async_step_after_auth(self, _user_input: dict | None = None) -> config_entries.ConfigFlowResult:
         """Handle the after-auth step."""
         if self.source == config_entries.SOURCE_REAUTH:
             return await self.__finish()
