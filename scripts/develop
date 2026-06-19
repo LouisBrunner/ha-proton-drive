@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh -e
 
-set -e
 
 cd "$(dirname "$0")/.."
 

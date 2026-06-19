@@ -75,8 +75,13 @@ class ProtonCLI:
 
     async def __ainit(self, hass: HomeAssistant) -> None:
         cached = Path(self.__path)
+        LOGGER.debug("Checking for cached Proton Drive CLI at %s", cached)
         if not await aiofiles.ospath.exists(cached):
             await self.__download(hass, cached)
+        try:
+            await self.run("version")
+        except CLIError as e:
+            raise CLIStartupError(str(e)) from e
 
     @classmethod
     def __get_arch(cls) -> str:
@@ -158,27 +163,31 @@ class ProtonCLI:
         id: str
         process: Process
 
-    async def __run(self, *args: str, wd: str | None = None) -> CLIRun:
+    async def __run(self, *args: str) -> CLIRun:
         argv = list(args)
         argv.append("--json")
 
         uid = uuid4().hex[:8]
-        LOGGER.debug("[%s] Running: %s %s (wd=%s)", uid, self.__path, " ".join(argv), wd)
+        LOGGER.debug("[%s] Running: %s %s", uid, self.__path, " ".join(argv))
 
-        proc = await asyncio.create_subprocess_exec(
-            self.__path,
-            *argv,
-            cwd=wd,
-            env={
-                **os.environ,
-                "PROTON_DRIVE_UNSAFE_SECRETS": "true",
-                "XDG_CACHE_HOME": self.__xdg,
-                "XDG_DATA_HOME": self.__xdg,
-                "XDG_STATE_HOME": self.__xdg,
-            },
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                self.__path,
+                *argv,
+                env={
+                    **os.environ,
+                    "PROTON_DRIVE_UNSAFE_SECRETS": "true",
+                    "XDG_CACHE_HOME": self.__xdg,
+                    "XDG_DATA_HOME": self.__xdg,
+                    "XDG_STATE_HOME": self.__xdg,
+                },
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except Exception as e:
+            LOGGER.exception("[%s] Failed to run Proton Drive CLI: %s", uid, e)
+            msg = f"Failed to run Proton Drive CLI: {e}"
+            raise CLIError(msg) from e
         return self.CLIRun(id=uid, process=proc)
 
     async def __get_auth(self) -> SimpleNamespace:
@@ -305,37 +314,22 @@ class ProtonCLI:
     class AuthFlow:
         """Represents an authentication flow."""
 
+        FLOW_TIMEOUT = 5 * 60
+
         def __init__(self, *, url: str, run: ProtonCLI.CLIRun) -> None:
             """Initialize an AuthFlow object."""
             self.__url = url
-            self.__result = self.__wait_task(run)
+            self.__result = asyncio.create_task(self.__finish(run))
 
         def get_url(self) -> str:
             """Get the URL to open in the browser for authentication."""
             return self.__url
 
-        def is_done(self) -> bool:
-            """Check if the authentication flow is done."""
-            return self.__result.done()
+        def task(self) -> asyncio.Task[Any]:
+            """Get the authentication flow task."""
+            return self.__result
 
-        def has_error(self) -> bool:
-            """Check if the authentication flow resulted in an error."""
-            return self.get_error() is not None
-
-        def get_error(self) -> str | None:
-            """Get the error message if the authentication flow resulted in an error."""
-            if not self.is_done():
-                msg = "Auth flow is not done yet"
-                raise RuntimeError(msg)
-            exc = self.__result.exception()
-            return str(exc) if exc else None
-
-        def __wait_task(self, run: ProtonCLI.CLIRun) -> asyncio.Future:
-            fut = asyncio.Future()
-            self.__task = asyncio.create_task(self.__finish(fut, run))
-            return fut
-
-        async def __finish(self, fut: asyncio.Future, run: ProtonCLI.CLIRun) -> None:
+        async def __finish(self, run: ProtonCLI.CLIRun) -> None:
             stdout_res = b""
             stderr_res = b""
 
@@ -349,23 +343,25 @@ class ProtonCLI:
                 else:
                     stderr_res += out
 
-            await asyncio.gather(
-                _read_stream(run.process.stdout, stdout=True),
-                _read_stream(run.process.stderr, stdout=False),
-            )
-            await run.process.wait()
-
             try:
-                res = ProtonCLI._process_run(run, stdout_res, stderr_res)
-                fut.set_result(res)
-            except CLIError as e:
-                fut.set_exception(e)
+                async with asyncio.timeout(self.FLOW_TIMEOUT):
+                    await asyncio.gather(
+                        _read_stream(run.process.stdout, stdout=True),
+                        _read_stream(run.process.stderr, stdout=False),
+                    )
+                    await run.process.wait()
+            except TimeoutError as e:
+                msg = "Auth flow timed out"
+                raise CLIError(msg) from e
+
+            return ProtonCLI._process_run(run, stdout_res, stderr_res)
 
     async def start_auth_flow(self) -> AuthFlow:
         """Start an authentication flow and return an AuthFlow object."""
         run = await self.__run("auth", "login")
 
         async def _read_url(run: ProtonCLI.CLIRun) -> str:
+            LOGGER.debug("Waiting for auth URL from CLI...")
             assert run.process.stdout is not None  # noqa: S101
             try:
                 async with asyncio.timeout(10):
@@ -385,5 +381,9 @@ class ProtonCLI:
                 LOGGER.exception("Missing 'signInUrl' in CLI output")
                 msg = "Missing 'signInUrl' in CLI output"
                 raise InvalidOutputError(msg) from e
+            except Exception as e:  # TODO: remove later?
+                LOGGER.exception("Unexpected error while reading auth URL from CLI")
+                msg = "Unexpected error while reading auth URL from CLI"
+                raise CLIError(msg) from e
 
         return self.AuthFlow(url=await _read_url(run), run=run)

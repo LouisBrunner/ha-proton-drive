@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
 from homeassistant.helpers import instance_id
 
 from .api import (
@@ -37,12 +37,12 @@ async def async_setup_entry(
     """Set up Proton Drive from a config entry."""
     if not entry.data.get(CONF_BACKUP_FOLDER):
         msg = "This is a legacy configuration, please delete it and recreate it from scratch."
-        raise ConfigEntryNotReady(msg)
+        raise ConfigEntryError(msg)
 
     try:
         cli = await ProtonCLI.create(hass)
     except CLIStartupError as e:
-        raise ConfigEntryNotReady(str(e)) from e
+        raise ConfigEntryError(str(e)) from e
 
     try:
         client = await ProtonDriveClient.create(
@@ -54,7 +54,7 @@ async def async_setup_entry(
     except AuthError as e:
         raise ConfigEntryAuthFailed(str(e)) from e
     except CLIError as e:
-        raise ConfigEntryNotReady(str(e)) from e
+        raise ConfigEntryError(str(e)) from e
 
     entry.runtime_data = ProtonDriveData(
         client=client,

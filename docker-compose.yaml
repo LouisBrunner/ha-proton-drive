@@ -1,7 +1,9 @@
 services:
   devcontainer:
-    build: {}
+    build:
+      target: ${TARGET:-musl}
     volumes:
+      - ~/.docker_bash_history:/root/.ash_history
       - .:/project
     ports:
       - "8123:8123"

@@ -1,11 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh -e
 
-set -e
 
 cd "$(dirname "$0")/.."
 
 python3 -m pip install --requirement requirements.txt --requirement requirements-dev.txt
-
-if compgen -G "gopy-wheels/*.whl"; then
-  python3 -m pip install --force-reinstall gopy-wheels/*.whl
-fi
