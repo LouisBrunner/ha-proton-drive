@@ -1,39 +1,39 @@
 {
   "config": {
-    "step": {
-      "auth_start": {
-        "title": "Setting Up CLI"
-      },
-      "auth_prepare": {
-        "title": "Starting Authentication Flow"
-      },
-      "auth_user": {
-        "title": "Sign in to Proton Drive"
-      },
-      "reauth_user": {
-        "title": "Re-authenticate with Proton Drive"
-      },
-      "backup_folder": {
-        "title": "Where to store the backups",
-        "data": {
-          "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
-        }
-      }
+    "abort": {
+      "already_configured": "This integration can only be configured once.",
+      "already_in_progress": "Authentication flow already in progress, please complete it before starting a new one",
+      "cannot_auth": "Failed to start authentication flow: {error}",
+      "cli_failed": "Failed to setup CLI: {error}",
+      "failed_auth": "Failed to authenticate: {error}",
+      "legacy": "This configuration is no longer supported, please delete it and recreate it.",
+      "reauth_successful": "Re-authentication successful",
+      "reconfigure_successful": "Reconfigure successful"
     },
     "progress": {
       "awaiting_user": "Please open the following link in your browser:\n\n{url}\n\nAuthenticate to your account then come back here.",
       "downloading_cli": "Downloading Proton Drive CLI v{version}…\nThis may take a few minutes depending on your internet connection.",
       "starting_auth_flow": "Starting authentication flow…"
     },
-    "abort": {
-      "cli_failed": "Failed to setup CLI: {error}",
-      "cannot_auth": "Failed to start authentication flow: {error}",
-      "failed_auth": "Failed to authenticate: {error}",
-      "already_in_progress": "Authentication flow already in progress, please complete it before starting a new one",
-      "already_configured": "This integration can only be configured once.",
-      "legacy": "This configuration is no longer supported, please delete it and recreate it.",
-      "reauth_successful": "Re-authentication successful",
-      "reconfigure_successful": "Reconfigure successful"
+    "step": {
+      "auth_prepare": {
+        "title": "Starting Authentication Flow"
+      },
+      "auth_start": {
+        "title": "Setting Up CLI"
+      },
+      "auth_user": {
+        "title": "Sign in to Proton Drive"
+      },
+      "backup_folder": {
+        "data": {
+          "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
+        },
+        "title": "Where to store the backups"
+      },
+      "reauth_user": {
+        "title": "Re-authenticate with Proton Drive"
+      }
     }
   }
 }
