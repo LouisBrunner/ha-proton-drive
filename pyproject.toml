@@ -1,0 +1,40 @@
+[project]
+name = "ha-proton-drive"
+version = "0"
+requires-python = ">=3.14.2"
+dependencies = [
+  "aiofiles>=25.1.0",
+  "cachetools>=7.1.4",
+  "cachetools-async>=0.0.5",
+]
+
+[dependency-groups]
+dev = ["ruff==0.15.18", "ty==0.0.51"]
+docker = ["homeassistant==2026.4.0"]
+local = ["homeassistant-stubs==2026.4.0"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+  # conflicting rules
+  "D203",
+  "D212",
+  "COM812",
+  # they are useful
+  "FIX001",
+  "FIX002",
+  "TD001",
+  "TD002",
+  "TD003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["T201"]
+
+[tool.uv]
+package = false

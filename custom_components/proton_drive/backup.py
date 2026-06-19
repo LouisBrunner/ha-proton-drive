@@ -9,13 +9,14 @@ from homeassistant.components.backup import (
     BackupAgent,
     BackupAgentError,
     BackupNotFound,
+    OnProgressCallback,
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 
 from .api import ProtonDriveError
 from .cli import CLIError
-from .const import DOMAIN, LOGGER, OnProgressCallback
+from .const import DOMAIN, LOGGER
 from .data import DATA_BACKUP_AGENT_LISTENERS, ProtonDriveConfigEntry
 
 if TYPE_CHECKING:
@@ -92,7 +93,7 @@ class ProtonDriveBackupAgent(BackupAgent):
         *,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
-        on_progress: OnProgressCallback | None = None,
+        on_progress: OnProgressCallback,
         **_kwargs: Any,
     ) -> None:
         """

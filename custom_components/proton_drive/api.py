@@ -15,14 +15,14 @@ import aiofiles.os
 import aiofiles.ospath
 from cachetools import TTLCache
 from cachetools_async import cached
-from homeassistant.components.backup import AgentBackup
+from homeassistant.components.backup import AgentBackup, OnProgressCallback
 from homeassistant.components.backup.util import suggested_filename
 
 from .cli import (
     CLIError,
     ProtonCLI,
 )
-from .const import DOMAIN, LOGGER, OnProgressCallback
+from .const import DOMAIN, LOGGER
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, AsyncIterator, Callable, Coroutine
@@ -111,9 +111,7 @@ class ProtonDriveClient:
         self.__cli = cli
         self.__instance_id = instance_id
         self.__backup_folder = Path(backup_folder)
-        self.__temp_backup_dir = Path(
-            hass.config.path(".cache", DOMAIN, "tmp_backups")
-        )  # FIXME: use cache_path when targeting later HA
+        self.__temp_backup_dir = Path(hass.config.cache_path(DOMAIN, "tmp_backups"))
 
     @classmethod
     async def create(
@@ -229,7 +227,7 @@ class ProtonDriveClient:
         self,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
-        on_progress: OnProgressCallback | None = None,
+        on_progress: OnProgressCallback,
     ) -> None:
         """Upload a Home Assistant backup."""
         LOGGER.info("Uploading backup with ID: %s", backup.backup_id)
@@ -259,15 +257,14 @@ class ProtonDriveClient:
                             base_name=base_name,
                             metadata=backup.as_dict(),
                             chunks=1,
-                        ).as_dict()
-                    )
+                        ).as_dict(),
+                    ),
                 )
 
             async with aiofiles.open(archive_path, "wb") as f:
                 async for chunk in await open_stream():
                     await f.write(chunk)
-                    if on_progress is not None:
-                        on_progress(bytes_uploaded=await f.tell() // 2)
+                    on_progress(bytes_uploaded=await f.tell() // 2)
                 size = await f.tell()
 
             try:
@@ -288,8 +285,7 @@ class ProtonDriveClient:
                 await self.__cli.run("filesystem", "delete", *[str(trash / f.name) for f in to_delete])
                 raise
 
-            if on_progress is not None:
-                on_progress(bytes_uploaded=size)
+            on_progress(bytes_uploaded=size)
 
     async def delete_backup(self, backup_id: str) -> None:
         """Delete a Home Assistant backup."""

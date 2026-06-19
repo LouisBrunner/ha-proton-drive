@@ -26,7 +26,7 @@ def _form_backup_folder(*, backup_folder: str) -> vol.Schema:
     return vol.Schema(
         {
             vol.Optional(CONF_BACKUP_FOLDER, default=(backup_folder)): selector.TextSelector(),
-        }
+        },
     )
 
 
@@ -39,9 +39,9 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self.__backup_folder: str = "/my-files"
         self.__cli: ProtonCLI | None = None
-        self.__cli_task: ProtonDriveFlowHandler.HASSTask[ProtonCLI] | None = None
-        self.__auth_task: tuple[ProtonCLI.AuthFlow, ProtonDriveFlowHandler.HASSTask[Any]] | None = None
-        self.__auth_flow_task: ProtonDriveFlowHandler.HASSTask[ProtonCLI.AuthFlow] | None = None
+        self.__cli_task: ProtonDriveFlowHandler._HASSTask[ProtonCLI] | None = None
+        self.__auth_task: tuple[ProtonCLI.AuthFlow, ProtonDriveFlowHandler._HASSTask[Any]] | None = None
+        self.__auth_flow_task: ProtonDriveFlowHandler._HASSTask[ProtonCLI.AuthFlow] | None = None
         self.__error: tuple[str, str] | None = None
 
     async def async_step_user(
@@ -130,7 +130,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             LOGGER.debug("Auth flow task is done")
             task = await self.__auth_flow_task
             LOGGER.debug("Auth flow task worked: %s", task)
-            self.__auth_task = (task, self.HASSTask(task.task()))
+            self.__auth_task = (task, self._HASSTask(task.task()))
             LOGGER.debug("Auth flow task worked: %s", self.__auth_task)
             return self.async_show_progress_done(next_step_id=self.__get_auth_step_id())
         except CLIError as e:
@@ -173,7 +173,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         _user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Handle the reauthentication user step."""
-        return await self.async_step_auth()
+        return await self.async_step_auth_user()
 
     async def async_step_after_auth(self) -> config_entries.ConfigFlowResult:
         """Handle the after-auth step."""
@@ -207,12 +207,6 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     def __get_auth_step_id(self) -> str:
         return "reauth_user" if self.source == config_entries.SOURCE_REAUTH else "auth_user"
 
-    def __update_progress(self, progress: float) -> None:
-        if hasattr(self, "async_update_progress"):
-            self.async_update_progress(progress)
-        else:
-            LOGGER.debug("Progress update not supported in this version of Home Assistant")
-
     async def __finish(self) -> config_entries.ConfigFlowResult:
         await self.async_set_unique_id(unique_id=DOMAIN)
         if self.source in (
@@ -242,26 +236,21 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    def __async_create_task[T](self, coro: Coroutine[None, None, T]) -> HASSTask[T]:
-        return self.HASSTask(self.hass.async_create_task(coro))
+    def __async_create_task[T](self, coro: Coroutine[None, None, T]) -> _HASSTask[T]:
+        return self._HASSTask(self.hass.async_create_task(coro))
 
-    class HASSTask[T]:
-        """Shush."""
-
+    class _HASSTask[T]:
         MINIMUM_ASYNC_DURATION_S = 1
 
         def __init__(self, task: asyncio.Task[T]) -> None:
-            """Shush."""
             self.__task = task
             self.__first = True
             self.__started = time.monotonic()
 
         def task(self) -> asyncio.Task[T]:
-            """Shush."""
             return self.__task
 
         def done(self) -> bool:
-            """Shush."""
             # FIXME: crazy, but if we don't show the progress at least once, HomeAssistant breaks
             if self.__first:
                 self.__first = False
@@ -269,7 +258,6 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.__task.done()
 
         def __await__(self) -> Generator[None, None, T]:
-            """Shush."""
             return self.__wait().__await__()
 
         async def __wait(self) -> T:

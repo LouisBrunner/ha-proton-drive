@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import instance_id
 
 from .api import (
@@ -19,6 +19,7 @@ from .cli import (
     AuthError,
     CLIError,
     CLIStartupError,
+    DownloadCLINetworkError,
     ProtonCLI,
 )
 from .const import CONF_BACKUP_FOLDER
@@ -41,6 +42,8 @@ async def async_setup_entry(
 
     try:
         cli = await ProtonCLI.create(hass)
+    except DownloadCLINetworkError as e:
+        raise ConfigEntryNotReady(str(e)) from e
     except CLIStartupError as e:
         raise ConfigEntryError(str(e)) from e
 

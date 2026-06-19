@@ -1,3 +1,0 @@
-aiofiles>=25.1.0
-cachetools>=7.1.4
-cachetools-async>=0.0.5
