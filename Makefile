@@ -1,5 +1,5 @@
 
-INSIDE_DOCKER = $(shell stat /.dockerenv 2>&1 >/dev/null && echo 1 || echo 0)
+INSIDE_DOCKER = $(shell stat /.indocker 2>&1 >/dev/null && echo 1 || echo 0)
 ifeq ($(INSIDE_DOCKER),1)
 	export UV_PROJECT_ENVIRONMENT=/tmp/.venv
 	export UV_LINK_MODE=symlink
