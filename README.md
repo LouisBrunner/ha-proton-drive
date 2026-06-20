@@ -27,13 +27,13 @@ make devcontainer
 You can then setup the dependencies using
 
 ```bash
-make docker-setup
+make setup
 ```
 
 then start running HA (available at http://localhost:8123) with the integration:
 
 ```bash
-make docker-dev
+make dev
 ```
 
 Finally you can lint the integration using:
