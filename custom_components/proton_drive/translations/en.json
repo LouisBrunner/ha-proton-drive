@@ -19,9 +19,6 @@
       "auth_prepare": {
         "title": "Starting Authentication Flow"
       },
-      "auth_start": {
-        "title": "Setting Up CLI"
-      },
       "auth_user": {
         "title": "Sign in to Proton Drive"
       },
@@ -30,6 +27,9 @@
           "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
         },
         "title": "Where to store the backups"
+      },
+      "prepare_cli": {
+        "title": "Setting Up CLI"
       },
       "reauth_user": {
         "title": "Re-authenticate with Proton Drive"

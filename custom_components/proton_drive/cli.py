@@ -222,16 +222,23 @@ class ProtonCLI:
             data = await f.read()
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
-    async def list_files(self, folder: Path) -> list[str]:
+    async def list_files(self, folder: Path, *, folders_only: bool = False) -> list[str]:
         """List files in a folder."""
         LOGGER.debug("Listing files in folder: %s", folder)
         files = await self.run("filesystem", "list", str(folder))
         if type(files) is not list:
             msg = f"Expected list of files, got {type(files)}"
             raise InvalidOutputError(msg)
-        if folder == "/":
+        if folder == Path("/"):
             return [file.path for file in files]
+        if folders_only:
+            files = [f for f in files if f.type == "folder"]
         return [file.name.value for file in files]
+
+    async def get_email(self) -> str:
+        """Get the email address of the authenticated user."""
+        result = await self.__api_call("GET", "/core/v4/users")
+        return result.User.Email
 
     async def exists(self, path: Path | str) -> bool:
         """Check if a file or folder exists."""
@@ -281,7 +288,7 @@ class ProtonCLI:
                 msg = f"Failed to trash {r.LinkID}: {r.Response.Message}"
                 raise CLIError(msg)
 
-    async def __api_call(self, verb: str, path: str, body: dict) -> SimpleNamespace:
+    async def __api_call(self, verb: str, path: str, body: dict | None = None) -> SimpleNamespace:
         try:
             auth = await self.__get_auth()
             headers = {
@@ -297,7 +304,7 @@ class ProtonCLI:
                     verb,
                     f"https://mail.proton.me/api{path}",
                     headers=headers,
-                    json=body,
+                    **({"json": body} if body is not None else {}),
                 )
                 data = await res.text()
                 LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)

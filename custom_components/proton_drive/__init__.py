@@ -22,7 +22,7 @@ from .cli import (
     DownloadCLINetworkError,
     ProtonCLI,
 )
-from .const import CONF_BACKUP_FOLDER
+from .const import CONF_BACKUP_FOLDER, LOGGER
 from .data import DATA_BACKUP_AGENT_LISTENERS, ProtonDriveData
 
 if TYPE_CHECKING:
@@ -46,6 +46,13 @@ async def async_setup_entry(
         raise ConfigEntryNotReady(str(e)) from e
     except CLIStartupError as e:
         raise ConfigEntryError(str(e)) from e
+
+    if entry.title in ("CLI", "Proton Drive"):
+        try:
+            email = await cli.get_email()
+            hass.config_entries.async_update_entry(entry, title=email)
+        except CLIError:
+            LOGGER.warning("Failed to fetch user email to update entry title")
 
     try:
         client = await ProtonDriveClient.create(

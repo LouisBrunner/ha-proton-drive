@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.helpers import selector
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
 from .cli import CLIError, CLIStartupError, ProtonCLI
 from .const import (
@@ -21,11 +22,20 @@ from .const import (
 if TYPE_CHECKING:
     from collections.abc import Coroutine, Generator, Mapping
 
+_DEFAULT_FOLDER = Path("/my-files")
 
-def _form_backup_folder(*, backup_folder: str) -> vol.Schema:
+
+def _form_backup_folder(*, backup_folder: str, options: list[str]) -> vol.Schema:
     return vol.Schema(
         {
-            vol.Optional(CONF_BACKUP_FOLDER, default=(backup_folder)): selector.TextSelector(),
+            vol.Optional(CONF_BACKUP_FOLDER, default=backup_folder): SelectSelector(
+                SelectSelectorConfig(
+                    options=options,
+                    custom_value=True,
+                    mode=SelectSelectorMode.DROPDOWN,
+                    sort=True,
+                )
+            ),
         },
     )
 
@@ -37,7 +47,8 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize."""
-        self.__backup_folder: str = "/my-files"
+        self.__backup_folder: str = str(_DEFAULT_FOLDER)
+        self.__post_cli = "failed"
         self.__cli: ProtonCLI | None = None
         self.__cli_task: ProtonDriveFlowHandler._HASSTask[ProtonCLI] | None = None
         self.__auth_task: tuple[ProtonCLI.AuthFlow, ProtonDriveFlowHandler._HASSTask[Any]] | None = None
@@ -70,15 +81,24 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if folder is None:
             return self.async_abort(reason="legacy")
         self.__backup_folder = folder
-        return await self.async_step_backup_folder(user_input)
+        self.__post_cli = "backup_folder"
+        return await self.async_step_prepare_cli(user_input)
 
     async def async_step_auth_start(
         self,
         _user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Handle the authentication start step."""
+        self.__post_cli = "auth_prepare"
+        return await self.async_step_prepare_cli()
+
+    async def async_step_prepare_cli(
+        self,
+        _user_input: dict | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Handle the authentication start step."""
         if self.__cli is not None:
-            return self.async_show_progress_done(next_step_id="auth_prepare")
+            return self.async_show_progress_done(next_step_id=self.__post_cli)
 
         if self.__cli_task is None:
             LOGGER.debug("Starting CLI init")
@@ -88,7 +108,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if not self.__cli_task.done():
             LOGGER.debug("CLI task in progress")
             return self.async_show_progress(
-                step_id="auth_start",
+                step_id="prepare_cli",
                 progress_action="downloading_cli",
                 progress_task=self.__cli_task.task(),
                 description_placeholders={"version": CLI_VERSION},
@@ -98,7 +118,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             LOGGER.debug("CLI task is done")
             self.__cli = await self.__cli_task
             LOGGER.debug("CLI task worked: %s", self.__cli)
-            return self.async_show_progress_done(next_step_id="auth_prepare")
+            return self.async_show_progress_done(next_step_id=self.__post_cli)
         except CLIStartupError as e:
             LOGGER.exception("CLI startup failed")
             return await self.__progress_failed(reason="cli_failed", message=str(e))
@@ -187,10 +207,35 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             self.__backup_folder = user_input[CONF_BACKUP_FOLDER]
             return await self.__finish()
 
+        assert self.__cli is not None  # noqa: S101
+        options = await self.__get_folder_options(self.__backup_folder)
         return self.async_show_form(
             step_id="backup_folder",
-            data_schema=_form_backup_folder(backup_folder=self.__backup_folder),
+            data_schema=_form_backup_folder(backup_folder=self.__backup_folder, options=options),
         )
+
+    async def __get_folder_options(self, backup_folder: str) -> list[str]:
+        assert self.__cli is not None  # noqa: S101
+
+        current = Path(backup_folder)
+        extra = [p for p in (current, current.parent) if p not in (Path("/"), _DEFAULT_FOLDER)]
+
+        all_paths = [Path("/"), _DEFAULT_FOLDER, *extra]
+        results = await asyncio.gather(
+            *(self.__cli.list_files(p, folders_only=True) for p in all_paths),
+            return_exceptions=True,
+        )
+
+        options: list[str] = []
+        for folder_path, result in zip(all_paths, results, strict=True):
+            if isinstance(result, BaseException):
+                LOGGER.warning("Failed to list folders in %s: %s", folder_path, result)
+                continue
+            if folder_path == Path("/"):
+                options.extend(result)
+            else:
+                options.extend(str(folder_path / name) for name in result)
+        return options
 
     async def __progress_failed(self, reason: str, message: str) -> config_entries.ConfigFlowResult:
         self.__error = (reason, message)
@@ -229,8 +274,14 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         self._abort_if_unique_id_configured()
+        assert self.__cli is not None  # noqa: S101
+        title = "CLI"
+        try:
+            title = await self.__cli.get_email()
+        except CLIError:
+            LOGGER.warning("Failed to fetch user email for entry title")
         return self.async_create_entry(
-            title="CLI",
+            title=title,
             data={
                 CONF_BACKUP_FOLDER: self.__backup_folder,
             },
