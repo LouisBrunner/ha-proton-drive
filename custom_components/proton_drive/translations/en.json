@@ -26,6 +26,7 @@
         "data": {
           "backup_folder": "Folder, e.g. /my-files/HomeAssistant, leave as /my-files for root"
         },
+        "description": "A few folders are provided to clarify the structure of your Proton Drive. However you can also type a fully custom path if the folder you want is not in the list.",
         "title": "Where to store the backups"
       },
       "prepare_cli": {
