@@ -5,5 +5,9 @@ services:
       - ~/.docker_bash_history:/root/.ash_history
       - ~/.docker_bash_history:/home/app/.ash_history
       - .:/project
+      - uv_cache:/home/app/.cache/uv
     ports:
       - "8123:8123"
+
+volumes:
+  uv_cache:
