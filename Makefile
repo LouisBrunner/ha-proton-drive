@@ -1,5 +1,10 @@
-INSIDE_DOCKER = $(shell stat /.dockerenv 2>&1 >/dev/null && echo 1 || echo 0)
+
+INSIDE_DOCKER = $(shell stat /.indocker 2>&1 >/dev/null && echo 1 || echo 0)
 ifeq ($(INSIDE_DOCKER),1)
+	export UV_PROJECT_ENVIRONMENT=/tmp/.venv
+	export UV_LINK_MODE=symlink
+	PATH := /tmp/.venv/bin:$(PATH)
+	export PATH
 endif
 
 BIOME = biome
@@ -12,9 +17,7 @@ all:
 
 setup:
 ifeq ($(INSIDE_DOCKER),1)
-# FIXME: completely borked if you use uv sync, lovely
-	uv export --format requirements.txt --no-hashes --group hass --group docker --no-dev \
-	  | python3 -m pip install --only-binary=:all: -r /dev/stdin
+	uv sync --group hass --group docker --no-dev
 else
 	uv sync --group hass
 endif
