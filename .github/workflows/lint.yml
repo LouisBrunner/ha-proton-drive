@@ -33,6 +33,10 @@ jobs:
         with:
           enable-cache: true
 
+      # FIXME: for some reason the hash changes everyday for the same version
+      - name: Refresh multidict hashes
+        run: uv lock --upgrade-package multidict
+
       - name: Install dependencies
         run: make setup
 
