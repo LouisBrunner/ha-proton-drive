@@ -13,5 +13,5 @@
     "cachetools>=7.1.4",
     "cachetools-async>=0.0.5"
   ],
-  "version": "0.1.0-rc03"
+  "version": "0.1.0-rc04"
 }
