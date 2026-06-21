@@ -275,14 +275,18 @@ class ProtonDriveClient:
                 )
             except CLIError:
                 filenames = [Path(metadata_name), Path(archive_name)]
-                to_delete = map(self.__make_filepath, filenames)
-                to_delete = [f for f in filenames if await self.__cli.exists(f)]
-                await self.__cli.trash(*to_delete)
+                LOGGER.exception("Failed to upload backup: %s, deleting...", filenames)
 
-                if not self.__can_delete_file(self.__backup_folder):
-                    raise
-                trash = Path("/trash")
-                await self.__cli.run("filesystem", "delete", *[str(trash / f.name) for f in to_delete])
+                try:
+                    to_delete = list(map(self.__make_filepath, filenames))
+                    to_delete = [f for f in to_delete if await self.__cli.exists(f)]
+                    await self.__cli.trash(*to_delete)
+
+                    if self.__can_delete_file(self.__backup_folder):
+                        trash = Path("/trash")
+                        await self.__cli.run("filesystem", "delete", *[str(trash / Path(f).name) for f in to_delete])
+                except CLIError:
+                    LOGGER.exception("Failed to clean up orphaned files after upload failure")
                 raise
 
             on_progress(bytes_uploaded=size)
