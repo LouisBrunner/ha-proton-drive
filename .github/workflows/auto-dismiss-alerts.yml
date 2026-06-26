@@ -5,12 +5,11 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch:
 
-permissions:
-  security-events: write
-
 jobs:
   dismiss:
     uses: LouisBrunner/.github/.github/workflows/auto-dismiss-alerts.yml@main
+    secrets:
+      token: ${{ secrets.GH_PAT }}
     with:
       ignore-packages: '["homeassistant", "aiohttp", "zeroconf", "pyjwt", "PyJWT", "pillow", "cryptography"]'
       dismissed-reason: "not_used"
