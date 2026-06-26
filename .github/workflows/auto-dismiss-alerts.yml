@@ -1,8 +1,9 @@
 name: Auto-dismiss alerts
 
 on:
-  dependabot_alert:
-    types: [created, reintroduced]
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
 
 permissions:
   security-events: write
@@ -11,8 +12,6 @@ jobs:
   dismiss:
     uses: LouisBrunner/.github/.github/workflows/auto-dismiss-alerts.yml@main
     with:
-      alert-number: ${{ github.event.alert.number }}
-      package-name: ${{ github.event.alert.dependency.package.name }}
-      ignore-packages: '["homeassistant"]'
+      ignore-packages: '["homeassistant", "aiohttp", "zeroconf", "pyjwt", "PyJWT", "pillow", "cryptography"]'
       dismissed-reason: "not_used"
-      dismissed-comment: "homeassistant is a dev dependency only (type stubs), not present in production"
+      dismissed-comment: "transitive dependency of homeassistant, which is a dev dependency only (type stubs), not present in production"
