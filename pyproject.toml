@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff==0.15.19", "tombi==1.1.5", "ty==0.0.52"]
+dev = ["ruff==0.15.20", "tombi==1.1.5", "ty==0.0.54"]
 docker = ["aiohasupervisor==0.5.0"]
 hass = ["homeassistant==2026.4.0"]
 
