@@ -2,8 +2,7 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: write
@@ -11,30 +10,16 @@ permissions:
 jobs:
   draft:
     name: Draft release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout the repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Check if release needed
-        id: check
-        run: |
-          VERSION=$(jq -r '.version' custom_components/proton_drive/manifest.json)
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          if gh release view "v${VERSION}" &>/dev/null; then
-            echo "needed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "needed=true" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get version
+        id: ver
+        run: echo "version=$(jq -r '.version' custom_components/proton_drive/manifest.json)" >> "$GITHUB_OUTPUT"
 
       - name: Create draft release
-        if: steps.check.outputs.needed == 'true'
-        run: |
-          gh release create "v${{ steps.check.outputs.version }}" \
-            --draft \
-            --title "v${{ steps.check.outputs.version }}" \
-            --generate-notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: LouisBrunner/.github/.github/actions/draft-release@main
+        with:
+          version: ${{ steps.ver.outputs.version }}

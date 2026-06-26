@@ -1,4 +1,3 @@
-# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -6,7 +5,21 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      actions-deps:
+      actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      actions-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+      actions-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
         patterns:
           - "*"
 
@@ -15,19 +28,22 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      # Dependabot should not update Home Assistant as that should match the homeassistant key in hacs.json
       - dependency-name: "homeassistant"
     groups:
-      security-updates:
+      uv-security:
         applies-to: security-updates
         patterns:
           - "*"
-      major-updates:
+      uv-major:
         applies-to: version-updates
         update-types:
           - "major"
-      minor-updates:
+        patterns:
+          - "*"
+      uv-minor:
         applies-to: version-updates
         update-types:
           - "minor"
           - "patch"
+        patterns:
+          - "*"
