@@ -29,6 +29,7 @@ updates:
       interval: "weekly"
     ignore:
       - dependency-name: "homeassistant"
+      - dependency-name: "uv"
     groups:
       uv-security:
         applies-to: security-updates

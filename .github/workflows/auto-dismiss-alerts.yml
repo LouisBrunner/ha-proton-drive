@@ -14,6 +14,6 @@ jobs:
     secrets:
       token: ${{ github.token }}
     with:
-      ignore-packages: '["homeassistant", "aiohttp", "zeroconf", "pyjwt", "PyJWT", "pillow", "cryptography"]'
+      ignore-packages: '["homeassistant", "aiohttp", "zeroconf", "pyjwt", "PyJWT", "pillow", "cryptography", "uv"]'
       dismissed-reason: "not_used"
       dismissed-comment: "transitive dependency of homeassistant, which is a dev dependency only (type stubs), not present in production"
