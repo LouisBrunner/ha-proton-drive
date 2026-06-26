@@ -2,22 +2,23 @@ name: Lint
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  configs:
+    uses: LouisBrunner/.github/.github/workflows/lint-configs.yml@main
+
   vet:
     name: Vet
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: ghcr.io/home-assistant/homeassistant-base:2026.05.0
       options: --user root
@@ -45,7 +46,7 @@ jobs:
 
   manifest-sync:
     name: Manifest sync
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout the repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
