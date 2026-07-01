@@ -17,7 +17,6 @@ import aiofiles
 import aiofiles.os
 import aiofiles.ospath
 import aiohttp
-from awesomeversion import AwesomeVersion
 from homeassistant.loader import async_get_integration
 
 from .const import (
@@ -31,6 +30,7 @@ from .const import (
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
 
+    from awesomeversion import AwesomeVersion
     from homeassistant.core import HomeAssistant
 
 
