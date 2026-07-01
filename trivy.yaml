@@ -1,0 +1,4 @@
+# $schema:https://raw.githubusercontent.com/aquasecurity/trivy/refs/tags/v0.72.0/schema/trivy-config.json
+scan:
+  skip-dirs:
+    - "config"

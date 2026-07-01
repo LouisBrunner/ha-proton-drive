@@ -17,6 +17,7 @@ import aiofiles
 import aiofiles.os
 import aiofiles.ospath
 import aiohttp
+from homeassistant.loader import async_get_integration
 
 from .const import (
     CLI_BASE_URL_FORMAT,
@@ -29,6 +30,7 @@ from .const import (
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
 
+    from awesomeversion import AwesomeVersion
     from homeassistant.core import HomeAssistant
 
 
@@ -64,21 +66,43 @@ class AuthError(CLIError):
     """Exception to indicate an authentication error with Proton Drive."""
 
 
+def _transform_version(version: AwesomeVersion | None) -> str:
+    """
+    Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
+
+    See https://github.com/ProtonDriveApps/sdk/blob/main/README.md#operational-requirements.
+    """
+    if version is None:
+        return "unknown-stable"
+
+    channel = "stable"
+    if version.beta or version.release_candidate:
+        channel = "beta"
+    elif version.alpha or version.dev:
+        channel = "alpha"
+    suffix = ""
+    if version.release_candidate:
+        suffix = f"+{version.modifier}"
+    return f"{version.major or 0}.{version.minor or 0}.{version.patch or 0}-{channel}{suffix}"
+
+
 class ProtonCLI:
     """Wrapper for the Proton Drive CLI binary."""
 
     API_RESPONSE_SUCCESS = 1000
     READ_CHUNK = 65536
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, integration_version: str) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
+        self.__integration_version = integration_version
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
         """Create and initialize a ProtonCLI instance."""
-        me = cls(hass)
+        ver = (await async_get_integration(hass, DOMAIN)).version
+        me = cls(hass, _transform_version(ver))
         await me.__ainit(hass)
         return me
 
@@ -295,7 +319,7 @@ class ProtonCLI:
                 "Authorization": f"Bearer {auth.session.accessToken}",
                 "Content-Type": "application/json",
                 "x-pm-uid": auth.session.uid,
-                "x-pm-appversion": "web-drive@5.0.0",
+                "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
             }
             async with self.__http_session() as session:
                 uid = uuid4().hex[:8]

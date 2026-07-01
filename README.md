@@ -1,5 +1,7 @@
 # Proton Drive
 
+**Disclaimer: This is a third-party application not officially supported by Proton.**
+
 Proton Drive integration for Home Assistant (compatible with HACS).
 
 ## Installation
@@ -30,7 +32,7 @@ You can then setup the dependencies using
 make setup
 ```
 
-then start running HA (available at http://localhost:8123) with the integration:
+then start running HA (accessible [locally](http://localhost:8123)) with the integration:
 
 ```bash
 make dev

@@ -822,7 +822,7 @@ name = "multidict"
 version = "6.7.1"
 source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
 wheels = [
-    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:199ae1cfae6526efb8461944056a52e25c85fb90374c5cdd7d1390619b7dfffc" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:8ff70e1287a2534a4417bbfe79230592a1df3e0c5782b6fe5562be75af9953e6" },
     { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:0ea474cf58d5aef7d4e806435de2a4885e225d7ec86e72bb68504286b4a9faad" },
     { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56" },
 ]
