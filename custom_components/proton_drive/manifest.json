@@ -1,17 +1,17 @@
 {
-  "domain": "proton_drive",
-  "name": "Proton Drive",
-  "after_dependencies": ["http", "backup"],
-  "codeowners": ["@LouisBrunner"],
-  "config_flow": true,
-  "documentation": "https://github.com/LouisBrunner/ha-proton-drive",
-  "integration_type": "service",
-  "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/LouisBrunner/ha-proton-drive/issues",
-  "requirements": [
-    "aiofiles>=25.1.0",
-    "cachetools>=7.1.4",
-    "cachetools-async>=0.0.5"
-  ],
-  "version": "0.1.0-rc04"
+	"domain": "proton_drive",
+	"name": "Proton Drive",
+	"after_dependencies": ["http", "backup"],
+	"codeowners": ["@LouisBrunner"],
+	"config_flow": true,
+	"documentation": "https://github.com/LouisBrunner/ha-proton-drive",
+	"integration_type": "service",
+	"iot_class": "cloud_polling",
+	"issue_tracker": "https://github.com/LouisBrunner/ha-proton-drive/issues",
+	"requirements": [
+		"aiofiles>=25.1.0",
+		"cachetools>=7.1.4",
+		"cachetools-async>=0.0.5"
+	],
+	"version": "0.1.0-rc05"
 }
