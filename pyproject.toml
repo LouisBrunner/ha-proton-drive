@@ -1,4 +1,5 @@
 #:schema https://json.schemastore.org/pyproject.json
+
 [project]
 name = "ha-proton-drive"
 version = "0"

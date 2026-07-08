@@ -1,5 +1,4 @@
 {
-	"$schema": "https://schemas.lbrunner.net/hacs/manifest.schema.json",
 	"hacs": "2.0.1",
 	"homeassistant": "2026.4.0",
 	"name": "Proton Drive"
