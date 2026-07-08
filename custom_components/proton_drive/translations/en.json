@@ -1,4 +1,5 @@
 {
+	"$schema": "https://schemas.lbrunner.net/home-assistant/integration-translations.schema.json",
 	"config": {
 		"abort": {
 			"already_configured": "This integration can only be configured once.",
