@@ -26,6 +26,58 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: "docker"
+    cooldown:
+      default-days: 7
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      docker-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+      docker-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+
+  - package-ecosystem: "docker-compose"
+    cooldown:
+      default-days: 7
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker-compose-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      docker-compose-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+      docker-compose-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+
   - package-ecosystem: "uv"
     cooldown:
       default-days: 7
