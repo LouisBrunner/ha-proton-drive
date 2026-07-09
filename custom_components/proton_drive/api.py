@@ -193,6 +193,8 @@ class ProtonDriveClient:
                     "download",
                     self.__make_filepath(name),
                     str(path),
+                    timeout_s=ProtonCLI.TRANSFER_TIMEOUT_S,
+                    retries=0,
                 )
             except CLIError as e:
                 LOGGER.error("Failed to download file %d/%d: %s", i + 1, len(files), name)
@@ -270,8 +272,22 @@ class ProtonDriveClient:
             try:
                 # TODO: upload progress feedback is missing
                 await asyncio.gather(
-                    self.__cli.run("filesystem", "upload", str(meta_path), str(self.__backup_folder)),
-                    self.__cli.run("filesystem", "upload", str(archive_path), str(self.__backup_folder)),
+                    self.__cli.run(
+                        "filesystem",
+                        "upload",
+                        str(meta_path),
+                        str(self.__backup_folder),
+                        timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
+                        retries=0,
+                    ),
+                    self.__cli.run(
+                        "filesystem",
+                        "upload",
+                        str(archive_path),
+                        str(self.__backup_folder),
+                        timeout_s=ProtonCLI.TRANSFER_TIMEOUT_S,
+                        retries=0,
+                    ),
                 )
             except CLIError:
                 filenames = [Path(metadata_name), Path(archive_name)]
@@ -362,6 +378,7 @@ class ProtonDriveClient:
                 "download",
                 self.__make_filepath(metadata_file),
                 str(path),
+                timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
             )
             async with aiofiles.open(path / metadata_file) as f:
                 data = await f.read()

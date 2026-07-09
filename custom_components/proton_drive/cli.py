@@ -58,6 +58,10 @@ class InvalidOutputError(CLIError):
     """Exception to indicate invalid output from the CLI."""
 
 
+class CLITimeoutError(CLIError):
+    """Exception to indicate a CLI command timed out."""
+
+
 class NodeNotFoundError(CLIError):
     """Exception to indicate a node was not found in Proton Drive."""
 
@@ -92,11 +96,16 @@ class ProtonCLI:
     API_RESPONSE_SUCCESS = 1000
     READ_CHUNK = 65536
 
+    DEFAULT_TIMEOUT_S = 10
+    METADATA_TIMEOUT_S = 60
+    TRANSFER_TIMEOUT_S = 10 * 60
+
     def __init__(self, hass: HomeAssistant, integration_version: str) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
+        self.__reap_tasks: set[asyncio.Task[None]] = set()
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
@@ -338,14 +347,53 @@ class ProtonCLI:
             raise CLIError(msg) from e
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
-    async def run(self, *args: str, is_json: bool = True) -> Any:
+    async def run(
+        self,
+        *args: str,
+        is_json: bool = True,
+        timeout_s: float = DEFAULT_TIMEOUT_S,
+        retries: int = 3,
+    ) -> Any:
         """Run a CLI command and return the parsed JSON output."""
-        run = await self.__run(*args)
-        stdout, stderr = await run.process.communicate()
-        return self._process_run(run, stdout, stderr, is_json=is_json)
+        attempt = 0
+        while True:
+            run = await self.__run(*args)
+            try:
+                async with asyncio.timeout(timeout_s):
+                    stdout, stderr = await run.process.communicate()
+            except TimeoutError as e:
+                run.process.kill()
+                # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+                reap_task = asyncio.create_task(run.process.wait())
+                self.__reap_tasks.add(reap_task)
+                reap_task.add_done_callback(self.__reap_tasks.discard)
+                if attempt >= retries:
+                    msg = f"[{run.id}] Command timed out after {timeout_s}s"
+                    raise CLITimeoutError(msg) from e
+                attempt += 1
+                LOGGER.warning(
+                    "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
+                )
+                continue
+            return self._process_run(run, stdout, stderr, is_json=is_json)
 
     @classmethod
     def _process_run(cls, run: _CLIRun, stdout: bytes, stderr: bytes, *, is_json: bool = True) -> Any:
+        if run.process.returncode != 0:
+            LOGGER.warning(
+                "[%s] CLI Result %d: stdout=%s, stderr=%s",
+                run.id,
+                run.process.returncode,
+                stdout.decode(),
+                stderr.decode(),
+            )
+            msg = stderr.decode()
+            if "Node not found" in msg:
+                raise NodeNotFoundError(msg)
+            if "You need to login first" in msg:
+                raise AuthError(msg)
+            raise CLIError(msg)
+
         LOGGER.debug(
             "[%s] CLI Result %d: stdout=%s, stderr=%s",
             run.id,
@@ -353,14 +401,6 @@ class ProtonCLI:
             stdout.decode(),
             stderr.decode(),
         )
-
-        if run.process.returncode != 0:
-            msg = stderr.decode()
-            if "Node not found" in msg:
-                raise NodeNotFoundError(msg)
-            if "You need to login first" in msg:
-                raise AuthError(msg)
-            raise CLIError(msg)
 
         json_output = stdout.decode().strip()
         if not json_output:

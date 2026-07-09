@@ -23,6 +23,14 @@ else
 endif
 .PHONY: setup
 
+setup-devcontainer:
+ifeq ($(INSIDE_DOCKER),1)
+	make setup
+else
+	docker compose exec -T devcontainer make setup
+endif
+.PHONY: setup-devcontainer
+
 deploy-local:
 	scp -rP 2020 custom_components/proton_drive root@homeassistant.local:/homeassistant/custom_components/
 .PHONY: deploy-local
@@ -43,7 +51,7 @@ ifeq ($(INSIDE_DOCKER),1)
 	fi
 	PYTHONPATH="$(PYTHONPATH):$(PWD)/custom_components" hass --config "$(PWD)/config" --debug
 else
-	@echo "Unsupported outside Docker" && false
+	docker compose exec -it devcontainer ash -c 'make dev'
 endif
 .PHONY: dev
 
@@ -52,6 +60,14 @@ vet:
 	uv run ruff format --diff
 	uv run ty check
 .PHONY: vet
+
+reg-test:
+ifeq ($(INSIDE_DOCKER),1)
+	PYTHONPATH="$(PYTHONPATH):$(CURDIR)/custom_components" uv run scripts/reg_test.py
+else
+	docker compose exec -T devcontainer make reg-test
+endif
+.PHONY: reg-test
 
 vet-toml:
 	uv run tombi format --check --diff
