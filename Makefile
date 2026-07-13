@@ -49,7 +49,7 @@ ifeq ($(INSIDE_DOCKER),1)
 		mkdir -p "$(PWD)/config"; \
 		hass --config "$(PWD)/config" --script ensure_config; \
 	fi
-	PYTHONPATH="$(PYTHONPATH):$(PWD)/custom_components" hass --config "$(PWD)/config" --debug
+	UV_LINK_MODE=copy PYTHONPATH="$(PYTHONPATH):$(PWD)/custom_components" hass --config "$(PWD)/config" --debug
 else
 	docker compose exec -it devcontainer ash -c 'make dev'
 endif
