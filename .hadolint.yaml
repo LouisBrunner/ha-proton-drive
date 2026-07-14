@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://schemas.lbrunner.net/hadolint/config.schema.json
+
+ignored:
+  # we use fuzzy `~` apk pins on purpose, exact `-rN` revisions churn too often
+  - DL3018
