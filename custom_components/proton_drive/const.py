@@ -8,27 +8,27 @@ DOMAIN = "proton_drive"
 
 CONF_BACKUP_FOLDER = "backup_folder"
 
-CLI_VERSION = "0.4.6"
+CLI_VERSION = "0.5.0"
 
 CLI_BASE_URL_FORMAT: dict[str, str] = {
     "glibc": "https://proton.me/download/drive/cli/{version}/linux-{arch}/proton-drive",
-    "musl": "https://github.com/LouisBrunner/proton-sdk/releases/download/v{version}/proton-drive-linux-{arch}-musl",
+    "musl": "https://proton.me/download/drive/cli/{version}/linux-{arch}-musl/proton-drive",
 }
 CLI_CHECKSUMS: dict[str, str] = {
     "glibc-arm64": (
-        "92b48ccb82f6480759aba1021546ab487c2baef93c985a2fd362d5a576693326"
-        "8cd039c546786efc641b5c2cdb600c1211e1d92f343059676b8461bb21d47117"
+        "a679e1e09d29413452a6ac24664dbd249bcafa1fb208e24b9c04133cd97488bf6"
+        "86d350cfcd2522742ac69de428142ac65cb56eb11f25260d3b4ffaa57d39054"
     ),
     "glibc-x64": (
-        "d187409932742e6fdc6aae2995998f4c89ea51999283395bc8d0bdc5343a79d3"
-        "1bf5a485d5af9adf3b7909fc92f2d2ef0b133edc4939d5faf1d096eb744425bb"
+        "d85edbc57412c92a9705b70a8d3a5c66ad933331554d6b922b912d6df29b4e5e9"
+        "b0d7a940a594927dd4788e1f8db86d5e9a23f084f07dbd5327f7a9e51d61272"
     ),
     "musl-arm64": (
-        "45fc7bb512286689efcd6a0dddc8087db6e308b83aa69c71257879ce5aa5c548"
-        "81aaf3b635ac1963df4108158aa672b277c319bd8c35633516ec2f27f344a195"
+        "5dea0dffd08bd14570c7c50f1e85221b91312c04b0d6684109f909dcd568050db"
+        "869e48158d93534c619f85e67731e3df4cf467a7ee81350b2f2af8e97a4a171"
     ),
     "musl-x64": (
-        "ec52adaa4872221f29ed4122d485bbdb4caf89021171706974ac68bce3da1fbd"
-        "c87dfe4bdff50e207561438ed5d302445bfab3ac83bab90e4950c7d9331a8b5a"
+        "faf5a227b054168eb3a4b4fee3264753976c1848ccab4554203082bc6bfabe455"
+        "bd306c9277d41d5e86104e8b96312ed814aa6ae26a781b59d1d020a27732e61"
     ),
 }

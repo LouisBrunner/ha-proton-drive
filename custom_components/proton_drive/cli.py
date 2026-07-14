@@ -93,7 +93,6 @@ def _transform_version(version: AwesomeVersion | None) -> str:
 class ProtonCLI:
     """Wrapper for the Proton Drive CLI binary."""
 
-    API_RESPONSE_SUCCESS = 1000
     READ_CHUNK = 65536
 
     DEFAULT_TIMEOUT_S = 10
@@ -285,41 +284,12 @@ class ProtonCLI:
         """Get file or folder metadata."""
         return await self.run("filesystem", "info", str(path))
 
-    def __get_share(self, path: Path | str) -> str:
-        path = Path(path)
-        if path.is_relative_to("/my-files"):
-            return "/my-files"
-        parts = Path(path).parts
-        if len(parts) < 3:  # noqa: PLR2004
-            msg = f"Invalid path: {path}"
-            raise ValueError(msg)
-        return f"/{parts[1]}/{parts[2]}"
-
-    @classmethod
-    def __get_link_id(cls, uid: str) -> str:
-        return uid.rsplit("~", maxsplit=1)[-1]
-
     async def trash(self, *files: Path | str) -> None:
         """Move files to the trash."""
         if not files:
             return
         LOGGER.info("Trashing files: %s", files)
-        parent = Path(files[0]).parent
-        if not all(Path(f).parent == parent for f in files):
-            msg = "All files must be in the same folder to trash them"
-            raise ValueError(msg)
-        infos = await asyncio.gather(*(self.stat(f) for f in files))
-        parent_id = self.__get_link_id(infos[0].parentUid)
-        share = await self.stat(self.__get_share(files[0]))
-        res = await self.__api_call(
-            "POST",
-            f"/drive/shares/{share.deprecatedShareId}/folders/{parent_id}/trash_multiple",
-            {"LinkIDs": [self.__get_link_id(i.uid) for i in infos]},
-        )
-        for r in res.Responses:
-            if r.Response.Code != self.API_RESPONSE_SUCCESS:
-                msg = f"Failed to trash {r.LinkID}: {r.Response.Message}"
-                raise CLIError(msg)
+        await self.run("filesystem", "trash", *[str(f) for f in files])
 
     async def __api_call(self, verb: str, path: str, body: dict | None = None) -> SimpleNamespace:
         try:
