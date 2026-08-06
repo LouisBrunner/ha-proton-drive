@@ -61,6 +61,10 @@ vet:
 	uv run ty check
 .PHONY: vet
 
+test:
+	uv run pytest
+.PHONY: test
+
 reg-test:
 ifeq ($(INSIDE_DOCKER),1)
 	PYTHONPATH="$(PYTHONPATH):$(CURDIR)/custom_components" uv run scripts/reg_test.py

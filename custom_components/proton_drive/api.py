@@ -97,7 +97,12 @@ class ProtonDriveClient:
     PART_EXT = f"{ARCHIVE_EXT}.part"
     READ_CHUNK = 131_072
     DOWNLOAD_WINDOW = 4
-    ALLOWED_DELETE_PREFIXES: ClassVar[list[Path]] = [Path("/my-files/"), Path("/devices/"), Path("/photos/")]
+    ALLOWED_DELETE_PREFIXES: ClassVar[list[Path]] = [
+        Path("/my-files/"),
+        Path("/devices/"),
+        Path("/shared-with-me/"),
+        Path("/photos/"),
+    ]
 
     def __init__(
         self,
@@ -128,6 +133,8 @@ class ProtonDriveClient:
         return me
 
     async def __prepare(self) -> None:
+        await self.__cli.get_email()
+
         if not await self.__cli.exists(self.__backup_folder):
             LOGGER.info("Backup folder not found, trying to create")
             await self.__cli.run(
@@ -347,7 +354,7 @@ class ProtonDriveClient:
         await self.__cli.trash(*to_delete)
 
     def __can_delete_file(self, filename: Path) -> bool:
-        # FIXME: see https://github.com/ProtonDriveApps/sdk/blob/main/js/cli/src/commands/fileSystem/commandFileSystemTrash.ts#L3
+        # FIXME: see https://github.com/ProtonDriveApps/sdk/blob/main/cli/src/commands/fileSystem/commandFileSystemTrash.ts#L3
         return any(filename.is_relative_to(prefix) for prefix in self.ALLOWED_DELETE_PREFIXES)
 
     async def list_backups(self) -> list[AgentBackup]:

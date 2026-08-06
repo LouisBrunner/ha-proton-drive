@@ -7,6 +7,7 @@ LOGGER: Logger = getLogger(__package__)
 DOMAIN = "proton_drive"
 
 CONF_BACKUP_FOLDER = "backup_folder"
+CONF_LAST_CLI_RUN = "last_cli_run"
 
 CLI_VERSION = "0.5.0"
 

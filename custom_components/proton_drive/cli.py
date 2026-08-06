@@ -7,7 +7,10 @@ import hashlib
 import json
 import os
 import platform
+import time
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from http import HTTPStatus
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -23,14 +26,17 @@ from .const import (
     CLI_BASE_URL_FORMAT,
     CLI_CHECKSUMS,
     CLI_VERSION,
+    CONF_LAST_CLI_RUN,
     DOMAIN,
     LOGGER,
 )
 
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
+    from collections.abc import AsyncIterator
 
     from awesomeversion import AwesomeVersion
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
 
@@ -99,18 +105,28 @@ class ProtonCLI:
     METADATA_TIMEOUT_S = 60
     TRANSFER_TIMEOUT_S = 10 * 60
 
-    def __init__(self, hass: HomeAssistant, integration_version: str) -> None:
+    STALE_AUTH_THRESHOLD_S = 24 * 60 * 60
+    STALE_AUTH_REQUIRED_SUCCESSES = 5
+    MARK_RAN_THROTTLE_S = 5 * 60
+
+    def __init__(self, hass: HomeAssistant, integration_version: str, entry: ConfigEntry | None) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
+        self.__hass = hass
+        self.__entry = entry
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
         self.__reap_tasks: set[asyncio.Task[int]] = set()
+        self.__critical_condition = asyncio.Condition()
+        self.__critical_lock = asyncio.Lock()
+        self.__critical_active = False
+        self.__critical_successes_remaining = 0
 
     @classmethod
-    async def create(cls, hass: HomeAssistant) -> ProtonCLI:
+    async def create(cls, hass: HomeAssistant, entry: ConfigEntry | None = None) -> ProtonCLI:
         """Create and initialize a ProtonCLI instance."""
         ver = (await async_get_integration(hass, DOMAIN)).version
-        me = cls(hass, _transform_version(ver))
+        me = cls(hass, _transform_version(ver), entry)
         await me.__ainit(hass)
         return me
 
@@ -126,7 +142,7 @@ class ProtonCLI:
             await self.__download(hass, cached)
 
         try:
-            await self.run("version", is_json=False)
+            await self.run("version", is_json=False, touches_auth=False)
         except CLIError as e:
             raise CLIStartupError(str(e)) from e
 
@@ -249,10 +265,72 @@ class ProtonCLI:
         return self._CLIRun(id=uid, process=proc)
 
     async def __get_auth(self) -> SimpleNamespace:
-        path = Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
-        async with aiofiles.open(path) as f:
+        async with aiofiles.open(self.__auth_session_path()) as f:
             data = await f.read()
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+
+    def __auth_session_path(self) -> Path:
+        return Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
+
+    def __is_auth_stale(self) -> bool:
+        if self.__entry is None:
+            return False
+        last_run = self.__entry.data.get(CONF_LAST_CLI_RUN)
+        return last_run is None or time.time() - last_run > self.STALE_AUTH_THRESHOLD_S
+
+    async def __mark_ran(self) -> None:
+        if self.__entry is None:
+            return
+        now = time.time()
+        last_run = self.__entry.data.get(CONF_LAST_CLI_RUN)
+        if last_run is not None and now - last_run < self.MARK_RAN_THROTTLE_S:
+            return
+        self.__hass.config_entries.async_update_entry(
+            self.__entry,
+            data={**self.__entry.data, CONF_LAST_CLI_RUN: now},
+        )
+
+    @asynccontextmanager
+    async def __serialize_if_auth_stale(self) -> AsyncIterator[None]:
+        """Serialize calls one at a time while auth looks stale, until N succeed in a row."""
+        async with self.__critical_condition:
+            if not self.__critical_active and self.__is_auth_stale():
+                LOGGER.debug(
+                    "Auth looks stale, serializing CLI/API calls until %d succeed in a row",
+                    self.STALE_AUTH_REQUIRED_SUCCESSES,
+                )
+                self.__critical_active = True
+                self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
+
+            is_critical = self.__critical_active
+            if is_critical:
+                while self.__critical_active and self.__critical_lock.locked():
+                    await self.__critical_condition.wait()
+                is_critical = self.__critical_active
+
+        if not is_critical:
+            yield
+            return
+
+        async with self.__critical_lock:
+            success = False
+            try:
+                yield
+                success = True
+            finally:
+                async with self.__critical_condition:
+                    if success:
+                        self.__critical_successes_remaining -= 1
+                        LOGGER.debug("Auth streak: %d successes remaining", self.__critical_successes_remaining)
+                        if self.__critical_successes_remaining <= 0:
+                            self.__critical_active = False
+                    else:
+                        self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
+                        LOGGER.debug(
+                            "Auth streak reset to %d successes remaining after a failure",
+                            self.__critical_successes_remaining,
+                        )
+                    self.__critical_condition.notify_all()
 
     async def list_files(self, folder: Path, *, folders_only: bool = False) -> list[str]:
         """List files in a folder."""
@@ -292,29 +370,37 @@ class ProtonCLI:
         await self.run("filesystem", "trash", *[str(f) for f in files])
 
     async def __api_call(self, verb: str, path: str, body: dict | None = None) -> SimpleNamespace:
-        try:
-            auth = await self.__get_auth()
-            headers = {
-                "Authorization": f"Bearer {auth.session.accessToken}",
-                "Content-Type": "application/json",
-                "x-pm-uid": auth.session.uid,
-                "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
-            }
-            async with self.__http_session() as session:
-                uid = uuid4().hex[:8]
-                LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
-                res = await session.request(
-                    verb,
-                    f"https://mail.proton.me/api{path}",
-                    headers=headers,
-                    **({"json": body} if body is not None else {}),
-                )
-                data = await res.text()
-                LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
-                res.raise_for_status()
-        except (aiohttp.ClientError, TimeoutError) as e:
-            msg = f"Failed to make API call: {verb} {path}"
-            raise CLIError(msg) from e
+        async with self.__serialize_if_auth_stale():
+            try:
+                auth = await self.__get_auth()
+                headers = {
+                    "Authorization": f"Bearer {auth.session.accessToken}",
+                    "Content-Type": "application/json",
+                    "x-pm-uid": auth.session.uid,
+                    "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
+                }
+                async with self.__http_session() as session:
+                    uid = uuid4().hex[:8]
+                    LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
+                    res = await session.request(
+                        verb,
+                        f"https://mail.proton.me/api{path}",
+                        headers=headers,
+                        **({"json": body} if body is not None else {}),
+                    )
+                    data = await res.text()
+                    LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
+                    res.raise_for_status()
+            except aiohttp.ClientResponseError as e:
+                if e.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+                    msg = f"Authentication failed calling {verb} {path}: {e}"
+                    raise AuthError(msg) from e
+                msg = f"Failed to make API call: {verb} {path}"
+                raise CLIError(msg) from e
+            except (aiohttp.ClientError, TimeoutError) as e:
+                msg = f"Failed to make API call: {verb} {path}"
+                raise CLIError(msg) from e
+            await self.__mark_ran()
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     async def run(
@@ -323,8 +409,25 @@ class ProtonCLI:
         is_json: bool = True,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         retries: int = 3,
+        touches_auth: bool = True,
     ) -> Any:
         """Run a CLI command and return the parsed JSON output."""
+        if not touches_auth:
+            return await self.__run_and_process(args, is_json=is_json, timeout_s=timeout_s, retries=retries)
+
+        async with self.__serialize_if_auth_stale():
+            result = await self.__run_and_process(args, is_json=is_json, timeout_s=timeout_s, retries=retries)
+            await self.__mark_ran()
+            return result
+
+    async def __run_and_process(
+        self,
+        args: tuple[str, ...],
+        *,
+        is_json: bool,
+        timeout_s: float,
+        retries: int,
+    ) -> Any:
         attempt = 0
         while True:
             run = await self.__run(*args)
