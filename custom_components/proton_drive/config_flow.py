@@ -15,7 +15,6 @@ from .cli import CLIError, CLIStartupError, ProtonCLI
 from .const import (
     CLI_VERSION,
     CONF_BACKUP_FOLDER,
-    CONF_LAST_CLI_RUN,
     DOMAIN,
     LOGGER,
 )
@@ -103,12 +102,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self.__cli_task is None:
             LOGGER.debug("Starting CLI init")
-            entry = None
-            if self.source == config_entries.SOURCE_REAUTH:
-                entry = self._get_reauth_entry()
-            elif self.source == config_entries.SOURCE_RECONFIGURE:
-                entry = self._get_reconfigure_entry()
-            self.__cli_task = self.__async_create_task(ProtonCLI.create(self.hass, entry))
+            self.__cli_task = self.__async_create_task(ProtonCLI.create(self.hass))
         assert self.__cli_task is not None  # noqa: S101
 
         if not self.__cli_task.done():
@@ -276,10 +270,7 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_mismatch()
             return self.async_update_reload_and_abort(
                 entry,
-                data_updates={
-                    **updates,
-                    CONF_LAST_CLI_RUN: time.time(),
-                },
+                data_updates=updates,
             )
 
         self._abort_if_unique_id_configured()
@@ -293,7 +284,6 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             title=title,
             data={
                 CONF_BACKUP_FOLDER: self.__backup_folder,
-                CONF_LAST_CLI_RUN: time.time(),
             },
         )
 

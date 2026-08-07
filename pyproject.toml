@@ -26,6 +26,9 @@ pythonpath = ["custom_components"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.ty.src]
+exclude = ["tests"]
+
 [tool.ruff]
 target-version = "py314"
 line-length = 120

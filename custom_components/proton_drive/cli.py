@@ -26,7 +26,6 @@ from .const import (
     CLI_BASE_URL_FORMAT,
     CLI_CHECKSUMS,
     CLI_VERSION,
-    CONF_LAST_CLI_RUN,
     DOMAIN,
     LOGGER,
 )
@@ -36,7 +35,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
     from awesomeversion import AwesomeVersion
-    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
 
@@ -107,12 +105,9 @@ class ProtonCLI:
 
     STALE_AUTH_THRESHOLD_S = 24 * 60 * 60
     STALE_AUTH_REQUIRED_SUCCESSES = 5
-    MARK_RAN_THROTTLE_S = 5 * 60
 
-    def __init__(self, hass: HomeAssistant, integration_version: str, entry: ConfigEntry | None) -> None:
+    def __init__(self, hass: HomeAssistant, integration_version: str) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
-        self.__hass = hass
-        self.__entry = entry
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
@@ -123,10 +118,10 @@ class ProtonCLI:
         self.__critical_successes_remaining = 0
 
     @classmethod
-    async def create(cls, hass: HomeAssistant, entry: ConfigEntry | None = None) -> ProtonCLI:
+    async def create(cls, hass: HomeAssistant) -> ProtonCLI:
         """Create and initialize a ProtonCLI instance."""
         ver = (await async_get_integration(hass, DOMAIN)).version
-        me = cls(hass, _transform_version(ver), entry)
+        me = cls(hass, _transform_version(ver))
         await me.__ainit(hass)
         return me
 
@@ -142,7 +137,7 @@ class ProtonCLI:
             await self.__download(hass, cached)
 
         try:
-            await self.run("version", is_json=False, touches_auth=False)
+            await self.run("version", is_json=False)
         except CLIError as e:
             raise CLIStartupError(str(e)) from e
 
@@ -272,29 +267,25 @@ class ProtonCLI:
     def __auth_session_path(self) -> Path:
         return Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
 
-    def __is_auth_stale(self) -> bool:
-        if self.__entry is None:
+    async def __is_auth_stale(self) -> bool:
+        path = self.__auth_session_path()
+        if not await aiofiles.ospath.exists(path):
             return False
-        last_run = self.__entry.data.get(CONF_LAST_CLI_RUN)
-        return last_run is None or time.time() - last_run > self.STALE_AUTH_THRESHOLD_S
-
-    async def __mark_ran(self) -> None:
-        if self.__entry is None:
-            return
-        now = time.time()
-        last_run = self.__entry.data.get(CONF_LAST_CLI_RUN)
-        if last_run is not None and now - last_run < self.MARK_RAN_THROTTLE_S:
-            return
-        self.__hass.config_entries.async_update_entry(
-            self.__entry,
-            data={**self.__entry.data, CONF_LAST_CLI_RUN: now},
-        )
+        try:
+            mtime = await aiofiles.ospath.getmtime(path)
+        except OSError:
+            return True
+        age_s = time.time() - mtime
+        stale = age_s > self.STALE_AUTH_THRESHOLD_S
+        if stale:
+            LOGGER.debug("Auth session file is stale (age: %.1fs)", age_s)
+        return stale
 
     @asynccontextmanager
     async def __serialize_if_auth_stale(self) -> AsyncIterator[None]:
         """Serialize calls one at a time while auth looks stale, until N succeed in a row."""
         async with self.__critical_condition:
-            if not self.__critical_active and self.__is_auth_stale():
+            if not self.__critical_active and await self.__is_auth_stale():
                 LOGGER.debug(
                     "Auth looks stale, serializing CLI/API calls until %d succeed in a row",
                     self.STALE_AUTH_REQUIRED_SUCCESSES,
@@ -302,35 +293,39 @@ class ProtonCLI:
                 self.__critical_active = True
                 self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
 
+            while self.__critical_active and self.__critical_lock.locked():
+                await self.__critical_condition.wait()
             is_critical = self.__critical_active
-            if is_critical:
-                while self.__critical_active and self.__critical_lock.locked():
-                    await self.__critical_condition.wait()
-                is_critical = self.__critical_active
 
         if not is_critical:
             yield
             return
 
-        async with self.__critical_lock:
-            success = False
-            try:
-                yield
-                success = True
-            finally:
-                async with self.__critical_condition:
-                    if success:
-                        self.__critical_successes_remaining -= 1
-                        LOGGER.debug("Auth streak: %d successes remaining", self.__critical_successes_remaining)
-                        if self.__critical_successes_remaining <= 0:
-                            self.__critical_active = False
-                    else:
-                        self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
-                        LOGGER.debug(
-                            "Auth streak reset to %d successes remaining after a failure",
-                            self.__critical_successes_remaining,
-                        )
-                    self.__critical_condition.notify_all()
+        try:
+            async with self.__critical_lock:
+                success = False
+                try:
+                    yield
+                    success = True
+                except NodeNotFoundError:
+                    success = True
+                    raise
+                finally:
+                    async with self.__critical_condition:
+                        if success:
+                            self.__critical_successes_remaining -= 1
+                            LOGGER.debug("Auth streak: %d successes remaining", self.__critical_successes_remaining)
+                            if self.__critical_successes_remaining <= 0:
+                                self.__critical_active = False
+                        else:
+                            self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
+                            LOGGER.debug(
+                                "Auth streak reset to %d successes remaining after a failure",
+                                self.__critical_successes_remaining,
+                            )
+        finally:
+            async with self.__critical_condition:
+                self.__critical_condition.notify_all()
 
     async def list_files(self, folder: Path, *, folders_only: bool = False) -> list[str]:
         """List files in a folder."""
@@ -400,7 +395,6 @@ class ProtonCLI:
             except (aiohttp.ClientError, TimeoutError) as e:
                 msg = f"Failed to make API call: {verb} {path}"
                 raise CLIError(msg) from e
-            await self.__mark_ran()
         return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     async def run(
@@ -409,46 +403,30 @@ class ProtonCLI:
         is_json: bool = True,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         retries: int = 3,
-        touches_auth: bool = True,
     ) -> Any:
         """Run a CLI command and return the parsed JSON output."""
-        if not touches_auth:
-            return await self.__run_and_process(args, is_json=is_json, timeout_s=timeout_s, retries=retries)
-
-        async with self.__serialize_if_auth_stale():
-            result = await self.__run_and_process(args, is_json=is_json, timeout_s=timeout_s, retries=retries)
-            await self.__mark_ran()
-            return result
-
-    async def __run_and_process(
-        self,
-        args: tuple[str, ...],
-        *,
-        is_json: bool,
-        timeout_s: float,
-        retries: int,
-    ) -> Any:
         attempt = 0
-        while True:
-            run = await self.__run(*args)
-            try:
-                async with asyncio.timeout(timeout_s):
-                    stdout, stderr = await run.process.communicate()
-            except TimeoutError as e:
-                run.process.kill()
-                # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
-                reap_task = asyncio.create_task(run.process.wait())
-                self.__reap_tasks.add(reap_task)
-                reap_task.add_done_callback(self.__reap_tasks.discard)
-                if attempt >= retries:
-                    msg = f"[{run.id}] Command timed out after {timeout_s}s"
-                    raise CLITimeoutError(msg) from e
-                attempt += 1
-                LOGGER.warning(
-                    "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
-                )
-                continue
-            return self._process_run(run, stdout, stderr, is_json=is_json)
+        async with self.__serialize_if_auth_stale():
+            while True:
+                run = await self.__run(*args)
+                try:
+                    async with asyncio.timeout(timeout_s):
+                        stdout, stderr = await run.process.communicate()
+                except TimeoutError as e:
+                    run.process.kill()
+                    # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+                    reap_task = asyncio.create_task(run.process.wait())
+                    self.__reap_tasks.add(reap_task)
+                    reap_task.add_done_callback(self.__reap_tasks.discard)
+                    if attempt >= retries:
+                        msg = f"[{run.id}] Command timed out after {timeout_s}s"
+                        raise CLITimeoutError(msg) from e
+                    attempt += 1
+                    LOGGER.warning(
+                        "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
+                    )
+                    continue
+                return self._process_run(run, stdout, stderr, is_json=is_json)
 
     @classmethod
     def _process_run(cls, run: _CLIRun, stdout: bytes, stderr: bytes, *, is_json: bool = True) -> Any:
@@ -463,7 +441,8 @@ class ProtonCLI:
             msg = stderr.decode()
             if "Node not found" in msg:
                 raise NodeNotFoundError(msg)
-            if "You need to login first" in msg:
+            # FIXME: odd but that's only explanation I can think off
+            if "You need to login first" in msg or "Root node not found" in msg:
                 raise AuthError(msg)
             raise CLIError(msg)
 

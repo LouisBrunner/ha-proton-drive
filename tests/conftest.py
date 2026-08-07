@@ -32,14 +32,14 @@ def _install_fake_homeassistant() -> None:
         raise NotImplementedError(msg)
 
     loader = _new_module("homeassistant.loader")
-    loader.async_get_integration = async_get_integration  # type: ignore[attr-defined]
+    loader.async_get_integration = async_get_integration
 
     components = _new_module("homeassistant.components")
     backup = _new_module("homeassistant.components.backup")
     backup.AgentBackup = type("AgentBackup", (), {})
     backup.OnProgressCallback = object
     backup_util = _new_module("homeassistant.components.backup.util")
-    backup_util.suggested_filename = lambda *_args, **_kwargs: ""  # type: ignore[attr-defined]
+    backup_util.suggested_filename = lambda *_args, **_kwargs: ""
 
     util = _new_module("homeassistant.util")
     hass_dict = _new_module("homeassistant.util.hass_dict")
@@ -50,16 +50,16 @@ def _install_fake_homeassistant() -> None:
         def __init__(self, name: str) -> None:
             self.name = name
 
-    hass_dict.HassKey = HassKey  # type: ignore[attr-defined]
+    hass_dict.HassKey = HassKey
 
-    homeassistant.exceptions = exceptions  # type: ignore[attr-defined]
-    homeassistant.helpers = helpers  # type: ignore[attr-defined]
-    homeassistant.loader = loader  # type: ignore[attr-defined]
-    homeassistant.components = components  # type: ignore[attr-defined]
-    components.backup = backup  # type: ignore[attr-defined]
-    backup.util = backup_util  # type: ignore[attr-defined]
-    homeassistant.util = util  # type: ignore[attr-defined]
-    util.hass_dict = hass_dict  # type: ignore[attr-defined]
+    homeassistant.exceptions = exceptions
+    homeassistant.helpers = helpers
+    homeassistant.loader = loader
+    homeassistant.components = components
+    components.backup = backup
+    backup.util = backup_util
+    homeassistant.util = util
+    util.hass_dict = hass_dict
 
 
 def _install_fake_aiohttp() -> None:
@@ -91,8 +91,8 @@ def _install_fake_aiohttp() -> None:
             self.message = message
             self.headers = headers
 
-    aiohttp.ClientError = ClientError  # type: ignore[attr-defined]
-    aiohttp.ClientResponseError = ClientResponseError  # type: ignore[attr-defined]
+    aiohttp.ClientError = ClientError
+    aiohttp.ClientResponseError = ClientResponseError
 
 
 _install_fake_homeassistant()

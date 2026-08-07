@@ -41,7 +41,7 @@ async def async_setup_entry(
         raise ConfigEntryError(msg)
 
     try:
-        cli = await ProtonCLI.create(hass, entry)
+        cli = await ProtonCLI.create(hass)
     except DownloadCLINetworkError as e:
         raise ConfigEntryNotReady(str(e)) from e
     except CLIStartupError as e:
