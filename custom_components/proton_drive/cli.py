@@ -311,9 +311,13 @@ class ProtonCLI:
         return self._CLIRun(id=uid, process=proc)
 
     async def __get_auth(self) -> SimpleNamespace:
-        async with aiofiles.open(self.__auth_session_path()) as f:
-            data = await f.read()
-        return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+        try:
+            async with aiofiles.open(self.__auth_session_path()) as f:
+                data = await f.read()
+            return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+        except (OSError, json.JSONDecodeError) as e:
+            msg = f"Missing or corrupt auth session: {e}"
+            raise AuthError(msg) from e
 
     def __auth_session_path(self) -> Path:
         return Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
@@ -401,7 +405,7 @@ class ProtonCLI:
                     data = await res.text()
                     LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
                     res.raise_for_status()
-            except (OSError, json.JSONDecodeError, AttributeError) as e:
+            except AttributeError as e:
                 msg = f"Missing or corrupt auth session calling {verb} {path}: {e}"
                 raise AuthError(msg) from e
             except aiohttp.ClientResponseError as e:
