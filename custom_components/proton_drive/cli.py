@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import uuid4
 
 import aiofiles
@@ -32,7 +32,7 @@ from .const import (
 
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Awaitable, Callable
 
     from awesomeversion import AwesomeVersion
     from homeassistant.core import HomeAssistant
@@ -106,16 +106,62 @@ class ProtonCLI:
     STALE_AUTH_THRESHOLD_S = 24 * 60 * 60
     STALE_AUTH_REQUIRED_SUCCESSES = 5
 
+    class _CriticalState:
+        def __init__(self) -> None:
+            self.__condition = asyncio.Condition()
+            self.__lock = asyncio.Lock()
+            self.__active = False
+            self.__successes_remaining = 0
+
+        async def _is_critical(self, *, is_stale: Callable[[], Awaitable[bool]]) -> bool:
+            async with self.__condition:
+                if not self.__active and await is_stale():
+                    LOGGER.debug(
+                        "Auth looks stale, serializing CLI/API calls until %d succeed in a row",
+                        ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES,
+                    )
+                    self.__active = True
+                    self.__successes_remaining = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+                while self.__active and self.__lock.locked():
+                    await self.__condition.wait()
+                return self.__active
+
+        @asynccontextmanager
+        async def _lock(self) -> AsyncIterator[None]:
+            try:
+                async with self.__lock:
+                    success = False
+                    try:
+                        yield
+                        success = True
+                    except NodeNotFoundError:
+                        success = True
+                        raise
+                    finally:
+                        async with self.__condition:
+                            if success:
+                                self.__successes_remaining -= 1
+                                LOGGER.debug("Auth streak: %d successes remaining", self.__successes_remaining)
+                                if self.__successes_remaining <= 0:
+                                    self.__active = False
+                            else:
+                                self.__successes_remaining = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+                                LOGGER.debug(
+                                    "Auth streak reset to %d successes remaining after a failure",
+                                    self.__successes_remaining,
+                                )
+            finally:
+                async with self.__condition:
+                    self.__condition.notify_all()
+
+    __critical: ClassVar[_CriticalState] = _CriticalState()
+
     def __init__(self, hass: HomeAssistant, integration_version: str) -> None:
         """Do not call this directly, use `await ProtonCLI.create(hass)` instead."""
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
         self.__reap_tasks: set[asyncio.Task[int]] = set()
-        self.__critical_condition = asyncio.Condition()
-        self.__critical_lock = asyncio.Lock()
-        self.__critical_active = False
-        self.__critical_successes_remaining = 0
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
@@ -124,6 +170,11 @@ class ProtonCLI:
         me = cls(hass, _transform_version(ver))
         await me.__ainit(hass)
         return me
+
+    async def aclose(self) -> None:
+        """Cancel this instance's own background bookkeeping."""
+        for task in list(self.__reap_tasks):
+            task.cancel()
 
     async def __ainit(self, hass: HomeAssistant) -> None:
         cached = Path(self.__path)
@@ -284,48 +335,12 @@ class ProtonCLI:
     @asynccontextmanager
     async def __serialize_if_auth_stale(self) -> AsyncIterator[None]:
         """Serialize calls one at a time while auth looks stale, until N succeed in a row."""
-        async with self.__critical_condition:
-            if not self.__critical_active and await self.__is_auth_stale():
-                LOGGER.debug(
-                    "Auth looks stale, serializing CLI/API calls until %d succeed in a row",
-                    self.STALE_AUTH_REQUIRED_SUCCESSES,
-                )
-                self.__critical_active = True
-                self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
-
-            while self.__critical_active and self.__critical_lock.locked():
-                await self.__critical_condition.wait()
-            is_critical = self.__critical_active
-
+        is_critical = await self.__critical._is_critical(is_stale=self.__is_auth_stale)  # noqa: SLF001
         if not is_critical:
             yield
             return
-
-        try:
-            async with self.__critical_lock:
-                success = False
-                try:
-                    yield
-                    success = True
-                except NodeNotFoundError:
-                    success = True
-                    raise
-                finally:
-                    async with self.__critical_condition:
-                        if success:
-                            self.__critical_successes_remaining -= 1
-                            LOGGER.debug("Auth streak: %d successes remaining", self.__critical_successes_remaining)
-                            if self.__critical_successes_remaining <= 0:
-                                self.__critical_active = False
-                        else:
-                            self.__critical_successes_remaining = self.STALE_AUTH_REQUIRED_SUCCESSES
-                            LOGGER.debug(
-                                "Auth streak reset to %d successes remaining after a failure",
-                                self.__critical_successes_remaining,
-                            )
-        finally:
-            async with self.__critical_condition:
-                self.__critical_condition.notify_all()
+        async with self.__critical._lock():  # noqa: SLF001
+            yield
 
     async def list_files(self, folder: Path, *, folders_only: bool = False) -> list[str]:
         """List files in a folder."""

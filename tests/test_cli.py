@@ -58,19 +58,18 @@ class FakeSession:
         return FakeResponse(self.__status)
 
 
-def make_cli(binary_path: Path, *, xdg: Path | None = None) -> ProtonCLI:
-    """Build a ProtonCLI around a stand-in binary, bypassing `create()` (needs a real Home Assistant instance)."""
+def make_cli(binary_path: Path, *, xdg: Path | None = None, shared_critical: bool = False) -> ProtonCLI:
+    """Build a ProtonCLI, bypassing `create()`; `shared_critical` opts into the real class-shared state."""
     cli = object.__new__(ProtonCLI)
-    for name, value in {
+    attrs = {
         "_ProtonCLI__path": str(binary_path),
         "_ProtonCLI__xdg": str(xdg) if xdg is not None else "/tmp",  # noqa: S108
         "_ProtonCLI__integration_version": "test",
         "_ProtonCLI__reap_tasks": set(),
-        "_ProtonCLI__critical_condition": asyncio.Condition(),
-        "_ProtonCLI__critical_lock": asyncio.Lock(),
-        "_ProtonCLI__critical_active": False,
-        "_ProtonCLI__critical_successes_remaining": 0,
-    }.items():
+    }
+    if not shared_critical:
+        attrs["_ProtonCLI__critical"] = ProtonCLI._CriticalState(ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES)
+    for name, value in attrs.items():
         setattr(cli, name, value)
     return cli
 
@@ -189,6 +188,26 @@ async def test_critical_section_wakes_waiters_after_failure(tmp_path: Path) -> N
     for i, result in enumerate(results):
         if i != 1:
             assert result is None
+
+
+async def test_two_instances_share_critical_section(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A failure on one ProtonCLI instance must reset another instance's shared streak too."""
+    monkeypatch.setattr(
+        ProtonCLI, "_ProtonCLI__critical", ProtonCLI._CriticalState(ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES)
+    )
+    script = write_sleep_maybe_fail_mock(tmp_path)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
+    cli_a = make_cli(script, xdg=tmp_path, shared_critical=True)
+    cli_b = make_cli(script, xdg=tmp_path, shared_critical=True)
+
+    required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+    for _ in range(required - 1):
+        await cli_a.run(str(CALL_DURATION_S), "ok", is_json=False, timeout_s=5, retries=0)
+    with pytest.raises(CLIError):
+        await cli_b.run(str(CALL_DURATION_S), "fail", is_json=False, timeout_s=5, retries=0)
+
+    elapsed = await _run_n_parallel(cli_a, required)
+    assert elapsed >= required * CALL_DURATION_S * 0.5
 
 
 @pytest.mark.parametrize("status", [HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN])

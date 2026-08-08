@@ -118,6 +118,10 @@ class ProtonDriveClient:
         self.__backup_folder = Path(backup_folder)
         self.__temp_backup_dir = Path(hass.config.cache_path(DOMAIN, "tmp_backups"))
 
+    async def aclose(self) -> None:
+        """Release this client's own resources on unload."""
+        await self.__cli.aclose()
+
     @classmethod
     async def create(
         cls,
