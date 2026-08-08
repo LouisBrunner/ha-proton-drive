@@ -81,5 +81,5 @@ async def async_setup_entry(
 
 async def async_unload_entry(_hass: HomeAssistant, entry: ProtonDriveConfigEntry) -> bool:
     """Unload a config entry."""
-    await entry.runtime_data.client.aclose()
+    entry.runtime_data.client.aclose()
     return True

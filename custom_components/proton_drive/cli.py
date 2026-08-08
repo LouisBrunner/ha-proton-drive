@@ -171,9 +171,9 @@ class ProtonCLI:
         await me.__ainit(hass)
         return me
 
-    async def aclose(self) -> None:
+    def aclose(self) -> None:
         """Cancel this instance's own background bookkeeping."""
-        for task in list(self.__reap_tasks):
+        for task in self.__reap_tasks:
             task.cancel()
 
     async def __ainit(self, hass: HomeAssistant) -> None:
@@ -456,7 +456,7 @@ class ProtonCLI:
             msg = stderr.decode()
             if "Node not found" in msg:
                 raise NodeNotFoundError(msg)
-            # FIXME: odd but that's only explanation I can think off
+            # FIXME: odd but that's only explanation I can think of
             if "You need to login first" in msg or "Root node not found" in msg:
                 raise AuthError(msg)
             raise CLIError(msg)

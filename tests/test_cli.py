@@ -68,7 +68,7 @@ def make_cli(binary_path: Path, *, xdg: Path | None = None, shared_critical: boo
         "_ProtonCLI__reap_tasks": set(),
     }
     if not shared_critical:
-        attrs["_ProtonCLI__critical"] = ProtonCLI._CriticalState(ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES)
+        attrs["_ProtonCLI__critical"] = ProtonCLI._CriticalState()
     for name, value in attrs.items():
         setattr(cli, name, value)
     return cli
@@ -192,9 +192,7 @@ async def test_critical_section_wakes_waiters_after_failure(tmp_path: Path) -> N
 
 async def test_two_instances_share_critical_section(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A failure on one ProtonCLI instance must reset another instance's shared streak too."""
-    monkeypatch.setattr(
-        ProtonCLI, "_ProtonCLI__critical", ProtonCLI._CriticalState(ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES)
-    )
+    monkeypatch.setattr(ProtonCLI, "_ProtonCLI__critical", ProtonCLI._CriticalState())
     script = write_sleep_maybe_fail_mock(tmp_path)
     write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
     cli_a = make_cli(script, xdg=tmp_path, shared_critical=True)
