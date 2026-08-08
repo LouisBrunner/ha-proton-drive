@@ -401,6 +401,9 @@ class ProtonCLI:
                     data = await res.text()
                     LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
                     res.raise_for_status()
+            except (OSError, json.JSONDecodeError, AttributeError) as e:
+                msg = f"Missing or corrupt auth session calling {verb} {path}: {e}"
+                raise AuthError(msg) from e
             except aiohttp.ClientResponseError as e:
                 if e.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                     msg = f"Authentication failed calling {verb} {path}: {e}"
