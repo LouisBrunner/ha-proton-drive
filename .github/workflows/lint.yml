@@ -52,6 +52,9 @@ jobs:
       - name: Vet
         run: make vet
 
+      - name: Test
+        run: make test
+
   manifest-sync:
     name: Manifest sync
     runs-on: ubuntu-24.04

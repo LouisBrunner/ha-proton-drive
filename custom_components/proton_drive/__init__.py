@@ -16,6 +16,7 @@ from .api import (
     ProtonDriveClient,
 )
 from .cli import (
+    APIUnavailableError,
     AuthError,
     CLIError,
     CLIStartupError,
@@ -40,12 +41,7 @@ async def async_setup_entry(
         msg = "This is a legacy configuration, please delete it and recreate it from scratch."
         raise ConfigEntryError(msg)
 
-    try:
-        cli = await ProtonCLI.create(hass)
-    except DownloadCLINetworkError as e:
-        raise ConfigEntryNotReady(str(e)) from e
-    except CLIStartupError as e:
-        raise ConfigEntryError(str(e)) from e
+    cli = await _create_cli(hass)
 
     if entry.title in ("CLI", "Proton Drive"):
         try:
@@ -54,17 +50,7 @@ async def async_setup_entry(
         except CLIError:
             LOGGER.warning("Failed to fetch user email to update entry title")
 
-    try:
-        client = await ProtonDriveClient.create(
-            hass=hass,
-            cli=cli,
-            instance_id=await instance_id.async_get(hass),
-            backup_folder=entry.data[CONF_BACKUP_FOLDER],
-        )
-    except AuthError as e:
-        raise ConfigEntryAuthFailed(str(e)) from e
-    except CLIError as e:
-        raise ConfigEntryError(str(e)) from e
+    client = await _create_client(hass, entry, cli)
 
     entry.runtime_data = ProtonDriveData(
         client=client,
@@ -79,6 +65,32 @@ async def async_setup_entry(
     return True
 
 
-async def async_unload_entry(_hass: HomeAssistant, _entry: ProtonDriveConfigEntry) -> bool:
+async def _create_cli(hass: HomeAssistant) -> ProtonCLI:
+    try:
+        return await ProtonCLI.create(hass)
+    except DownloadCLINetworkError as e:
+        raise ConfigEntryNotReady(str(e)) from e
+    except CLIStartupError as e:
+        raise ConfigEntryError(str(e)) from e
+
+
+async def _create_client(hass: HomeAssistant, entry: ProtonDriveConfigEntry, cli: ProtonCLI) -> ProtonDriveClient:
+    try:
+        return await ProtonDriveClient.create(
+            hass=hass,
+            cli=cli,
+            instance_id=await instance_id.async_get(hass),
+            backup_folder=entry.data[CONF_BACKUP_FOLDER],
+        )
+    except AuthError as e:
+        raise ConfigEntryAuthFailed(str(e)) from e
+    except APIUnavailableError as e:
+        raise ConfigEntryNotReady(str(e)) from e
+    except CLIError as e:
+        raise ConfigEntryError(str(e)) from e
+
+
+async def async_unload_entry(_hass: HomeAssistant, entry: ProtonDriveConfigEntry) -> bool:
     """Unload a config entry."""
+    entry.runtime_data.client.aclose()
     return True
