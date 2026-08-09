@@ -10,6 +10,7 @@ import platform
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,6 +37,8 @@ if TYPE_CHECKING:
 
     from awesomeversion import AwesomeVersion
     from homeassistant.core import HomeAssistant
+
+    _IsStaleFn = Callable[[str], Awaitable[tuple[bool, timedelta | None]]]
 
 
 class CLIStartupError(Exception):
@@ -107,7 +110,7 @@ class ProtonCLI:
     METADATA_TIMEOUT_S = 60
     TRANSFER_TIMEOUT_S = 10 * 60
 
-    STALE_AUTH_THRESHOLD_H = 24
+    STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
 
     class _CriticalState:
@@ -117,11 +120,12 @@ class ProtonCLI:
             self.__active = False
             self.__successes_remaining = 0
 
-        async def _is_critical(self, *, is_stale: Callable[[], Awaitable[bool]]) -> bool:
+        async def _is_critical(self, *, uid: str, is_stale: _IsStaleFn) -> bool:
             async with self.__condition:
-                if not self.__active and await is_stale():
+                if not self.__active and (await is_stale(uid))[0]:
                     LOGGER.debug(
-                        "Auth looks stale, serializing CLI/API calls until %d succeed in a row",
+                        "[%s] Auth looks stale, serializing CLI/API calls until %d succeed in a row",
+                        uid,
                         ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES,
                     )
                     self.__active = True
@@ -131,7 +135,7 @@ class ProtonCLI:
                 return self.__active
 
         @asynccontextmanager
-        async def _lock(self) -> AsyncIterator[None]:
+        async def _lock(self, *, uid: str, is_stale: _IsStaleFn) -> AsyncIterator[None]:
             try:
                 async with self.__lock:
                     success = False
@@ -145,13 +149,29 @@ class ProtonCLI:
                         async with self.__condition:
                             if success:
                                 self.__successes_remaining -= 1
-                                LOGGER.debug("Auth streak: %d successes remaining", self.__successes_remaining)
                                 if self.__successes_remaining <= 0:
-                                    self.__active = False
+                                    stale, age = await is_stale(uid)
+                                    if stale:
+                                        self.__successes_remaining = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+                                        LOGGER.warning(
+                                            "[%s] Auth staleness still present, "
+                                            "estimated TTL needs tuning (age: %s, ttl: %s)",
+                                            uid,
+                                            age,
+                                            ProtonCLI.STALE_AUTH_THRESHOLD,
+                                        )
+                                    else:
+                                        self.__active = False
+                                        LOGGER.debug("[%s] Auth staleness is gone", uid)
+                                else:
+                                    LOGGER.debug(
+                                        "[%s] Auth streak: %d successes remaining", uid, self.__successes_remaining
+                                    )
                             else:
                                 self.__successes_remaining = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
                                 LOGGER.debug(
-                                    "Auth streak reset to %d successes remaining after a failure",
+                                    "[%s] Auth streak reset to %d successes remaining after a failure",
+                                    uid,
                                     self.__successes_remaining,
                                 )
             finally:
@@ -287,11 +307,12 @@ class ProtonCLI:
         id: str
         process: Process
 
-    async def __run(self, *args: str) -> _CLIRun:
+    async def __run(self, *args: str, uid: str | None = None) -> _CLIRun:
         argv = list(args)
         argv.append("--json")
 
-        uid = uuid4().hex[:8]
+        if uid is None:
+            uid = uuid4().hex[:8]
         LOGGER.debug("[%s] Running: %s %s", uid, self.__path, " ".join(argv))
 
         try:
@@ -330,28 +351,30 @@ class ProtonCLI:
     def __auth_session_path(self) -> Path:
         return Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
 
-    async def __is_auth_stale(self) -> bool:
+    async def __is_auth_stale(self, uid: str) -> tuple[bool, timedelta | None]:
         path = self.__auth_session_path()
         if not await aiofiles.ospath.exists(path):
-            return False
+            return False, None
         try:
             mtime = await aiofiles.ospath.getmtime(path)
         except OSError:
-            return True
-        age_s = time.time() - mtime
-        stale = age_s > self.STALE_AUTH_THRESHOLD_H * 60 * 60
+            return True, None
+        age = timedelta(seconds=round(time.time() - mtime))
+        stale = age > self.STALE_AUTH_THRESHOLD
         if stale:
-            LOGGER.debug("Auth session file is stale (age: %.1fs)", age_s)
-        return stale
+            LOGGER.debug("[%s] Auth session file is stale (age: %s)", uid, age)
+        return stale, age
 
     @asynccontextmanager
-    async def __serialize_if_auth_stale(self) -> AsyncIterator[None]:
-        """Serialize calls one at a time while auth looks stale, until N succeed in a row."""
-        is_critical = await self.__critical._is_critical(is_stale=self.__is_auth_stale)  # noqa: SLF001
+    async def __serialize_if_auth_stale(self, uid: str) -> AsyncIterator[None]:
+        """Serialize calls one at a time while auth looks stale."""
+        is_critical = await self.__critical._is_critical(uid=uid, is_stale=self.__is_auth_stale)  # noqa: SLF001
         if not is_critical:
+            LOGGER.debug("[%s] Starting parallel call", uid)
             yield
             return
-        async with self.__critical._lock():  # noqa: SLF001
+        LOGGER.debug("[%s] Starting serialized call", uid)
+        async with self.__critical._lock(uid=uid, is_stale=self.__is_auth_stale):  # noqa: SLF001
             yield
 
     async def list_files(self, folder: Path, *, folders_only: bool = False) -> list[str]:
@@ -392,7 +415,8 @@ class ProtonCLI:
         await self.run("filesystem", "trash", *[str(f) for f in files])
 
     async def __api_call(self, verb: str, path: str, body: dict | None = None) -> SimpleNamespace:
-        async with self.__serialize_if_auth_stale():
+        uid = uuid4().hex[:8]
+        async with self.__serialize_if_auth_stale(uid):
             try:
                 pm_uid, access_token = await self.__get_auth()
                 headers = {
@@ -402,7 +426,6 @@ class ProtonCLI:
                     "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
                 }
                 async with self.__http_session() as session:
-                    uid = uuid4().hex[:8]
                     LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
                     res = await session.request(
                         verb,
@@ -439,9 +462,10 @@ class ProtonCLI:
     ) -> Any:
         """Run a CLI command and return the parsed JSON output."""
         attempt = 0
-        async with self.__serialize_if_auth_stale():
+        uid = uuid4().hex[:8]
+        async with self.__serialize_if_auth_stale(uid):
             while True:
-                run = await self.__run(*args)
+                run = await self.__run(*args, uid=uid)
                 try:
                     async with asyncio.timeout(timeout_s):
                         stdout, stderr = await run.process.communicate()

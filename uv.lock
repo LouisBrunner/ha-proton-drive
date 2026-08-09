@@ -841,8 +841,8 @@ name = "multidict"
 version = "6.7.1"
 source = { registry = "https://wheels.home-assistant.io/musllinux-index/" }
 wheels = [
-    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:0e192568aa079d0d75f13b3312303c61a5d5140d3dad59dd1316f9f15e3b064a" },
-    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:7ee7b52a2893ccbddaf3feba015b9ddbd05c5ebbd150a6f432d75e9ec4a82fd8" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:e9df540243076fc9efca93a4faacad19242c119500a97f8bc1356faf63ac4629" },
+    { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:9542d2fb3ece2958a8c5211c67806e7d20a995a575cec15381f38537ce140b12" },
     { url = "https://wheels.home-assistant.io/musllinux-index/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56" },
 ]
 

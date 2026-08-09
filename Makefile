@@ -51,7 +51,7 @@ ifeq ($(INSIDE_DOCKER),1)
 	fi
 	UV_LINK_MODE=copy PYTHONPATH="$(PYTHONPATH):$(PWD)/custom_components" hass --config "$(PWD)/config" --debug
 else
-	docker compose exec -it devcontainer ash -c 'make dev'
+	hot -d custom_components docker compose exec -it devcontainer ash -c 'make dev'
 endif
 .PHONY: dev
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
 from http import HTTPStatus
@@ -137,24 +138,59 @@ async def test_fresh_auth_file_runs_fully_in_parallel(tmp_path: Path) -> None:
     assert elapsed < CALL_DURATION_S * 3
 
 
-async def test_critical_section_serializes_until_success_streak(tmp_path: Path) -> None:
-    """While auth looks stale, calls must serialize until N succeed, then run in parallel again."""
+async def test_critical_section_serializes_while_stale(tmp_path: Path) -> None:
+    """While auth looks stale, calls must serialize instead of running in parallel, streak after streak."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
-    elapsed = await _run_n_parallel(cli, required + EXTRA_PARALLEL_CALLS)
+    total_calls = required + EXTRA_PARALLEL_CALLS
+    elapsed = await _run_n_parallel(cli, total_calls)
 
-    min_expected = required * CALL_DURATION_S * 0.5
-    max_expected = required * CALL_DURATION_S + CALL_DURATION_S * 3.5
-    assert min_expected <= elapsed <= max_expected
+    # The auth file is never refreshed here, so every call (not just the first streak) must serialize.
+    assert elapsed >= total_calls * CALL_DURATION_S * 0.75
+
+
+async def test_critical_section_returns_to_parallel_once_auth_refreshes(tmp_path: Path) -> None:
+    """Once the auth session file is refreshed mid-streak, calls must return to running in parallel."""
+    script = write_sleep_maybe_fail_mock(tmp_path)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
+    cli = make_cli(script, xdg=tmp_path)
+
+    required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+    for _ in range(required - 1):
+        await cli.run(str(CALL_DURATION_S), "ok", is_json=False, timeout_s=5, retries=0)
+    write_auth_session(tmp_path)  # simulate the CLI refreshing the session before the streak's last call
+    await cli.run(str(CALL_DURATION_S), "ok", is_json=False, timeout_s=5, retries=0)
+
+    elapsed = await _run_n_parallel(cli, required + EXTRA_PARALLEL_CALLS)
+    assert elapsed < CALL_DURATION_S * 3
+
+
+async def test_critical_section_rearms_if_still_stale_after_streak(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """If the auth session is still stale once the streak completes, calls must keep serializing and warn."""
+    script = write_sleep_maybe_fail_mock(tmp_path)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
+    cli = make_cli(script, xdg=tmp_path)
+
+    required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
+    with caplog.at_level(logging.WARNING, logger="proton_drive"):
+        for _ in range(required):
+            await cli.run(str(CALL_DURATION_S), "ok", is_json=False, timeout_s=5, retries=0)
+
+    assert any("TTL needs tuning" in record.message for record in caplog.records)
+
+    elapsed = await _run_n_parallel(cli, required)
+    assert elapsed >= required * CALL_DURATION_S * 0.5
 
 
 async def test_critical_section_requires_fresh_streak_after_failure(tmp_path: Path) -> None:
     """A failure mid-streak must require a full fresh streak of N successes, not just one more."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
@@ -170,7 +206,7 @@ async def test_critical_section_requires_fresh_streak_after_failure(tmp_path: Pa
 async def test_critical_section_wakes_waiters_after_failure(tmp_path: Path) -> None:
     """A failure mid-streak must still wake other tasks parked on the condition, not hang them."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     n_calls = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES + 2
@@ -194,7 +230,7 @@ async def test_two_instances_share_critical_section(tmp_path: Path, monkeypatch:
     """A failure on one ProtonCLI instance must reset another instance's shared streak too."""
     monkeypatch.setattr(ProtonCLI, "_ProtonCLI__critical", ProtonCLI._CriticalState())
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD.total_seconds() + 1)
     cli_a = make_cli(script, xdg=tmp_path, shared_critical=True)
     cli_b = make_cli(script, xdg=tmp_path, shared_critical=True)
 
