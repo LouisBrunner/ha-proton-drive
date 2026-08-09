@@ -16,6 +16,7 @@ from .api import (
     ProtonDriveClient,
 )
 from .cli import (
+    APIUnavailableError,
     AuthError,
     CLIError,
     CLIStartupError,
@@ -63,6 +64,8 @@ async def async_setup_entry(
         )
     except AuthError as e:
         raise ConfigEntryAuthFailed(str(e)) from e
+    except APIUnavailableError as e:
+        raise ConfigEntryNotReady(str(e)) from e
     except CLIError as e:
         raise ConfigEntryError(str(e)) from e
 

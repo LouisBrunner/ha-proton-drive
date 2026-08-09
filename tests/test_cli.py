@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Self
 
 import aiohttp
 import pytest
-from proton_drive.cli import AuthError, CLIError, ProtonCLI
+from proton_drive.cli import APIUnavailableError, AuthError, CLIError, ProtonCLI
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -140,7 +140,7 @@ async def test_fresh_auth_file_runs_fully_in_parallel(tmp_path: Path) -> None:
 async def test_critical_section_serializes_until_success_streak(tmp_path: Path) -> None:
     """While auth looks stale, calls must serialize until N succeed, then run in parallel again."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
@@ -154,7 +154,7 @@ async def test_critical_section_serializes_until_success_streak(tmp_path: Path) 
 async def test_critical_section_requires_fresh_streak_after_failure(tmp_path: Path) -> None:
     """A failure mid-streak must require a full fresh streak of N successes, not just one more."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     required = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES
@@ -170,7 +170,7 @@ async def test_critical_section_requires_fresh_streak_after_failure(tmp_path: Pa
 async def test_critical_section_wakes_waiters_after_failure(tmp_path: Path) -> None:
     """A failure mid-streak must still wake other tasks parked on the condition, not hang them."""
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
     cli = make_cli(script, xdg=tmp_path)
 
     n_calls = ProtonCLI.STALE_AUTH_REQUIRED_SUCCESSES + 2
@@ -194,7 +194,7 @@ async def test_two_instances_share_critical_section(tmp_path: Path, monkeypatch:
     """A failure on one ProtonCLI instance must reset another instance's shared streak too."""
     monkeypatch.setattr(ProtonCLI, "_ProtonCLI__critical", ProtonCLI._CriticalState())
     script = write_sleep_maybe_fail_mock(tmp_path)
-    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_S + 1)
+    write_auth_session(tmp_path, age_s=ProtonCLI.STALE_AUTH_THRESHOLD_H * 60 * 60 + 1)
     cli_a = make_cli(script, xdg=tmp_path, shared_critical=True)
     cli_b = make_cli(script, xdg=tmp_path, shared_critical=True)
 
@@ -223,11 +223,21 @@ async def test_api_call_401_403_raise_auth_error(
         await cli.get_email()
 
 
-async def test_api_call_500_stays_cli_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A non-auth error status must stay a plain CLIError, not AuthError."""
+async def test_api_call_500_raises_api_unavailable_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A 5xx from Proton's API must surface as APIUnavailableError, a retryable CLIError subtype."""
     write_auth_session(tmp_path)
     cli = make_cli(tmp_path / "unused", xdg=tmp_path)
     patch_http_session(monkeypatch, HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    with pytest.raises(APIUnavailableError):
+        await cli.get_email()
+
+
+async def test_api_call_400_stays_cli_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A non-auth, non-5xx error status must stay a plain CLIError."""
+    write_auth_session(tmp_path)
+    cli = make_cli(tmp_path / "unused", xdg=tmp_path)
+    patch_http_session(monkeypatch, HTTPStatus.BAD_REQUEST)
 
     with pytest.raises(CLIError) as exc_info:
         await cli.get_email()

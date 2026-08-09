@@ -74,6 +74,10 @@ class AuthError(CLIError):
     """Exception to indicate an authentication error with Proton Drive."""
 
 
+class APIUnavailableError(CLIError):
+    """Exception to indicate a transient failure reaching the Proton API."""
+
+
 def _transform_version(version: AwesomeVersion | None) -> str:
     """
     Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
@@ -103,7 +107,7 @@ class ProtonCLI:
     METADATA_TIMEOUT_S = 60
     TRANSFER_TIMEOUT_S = 10 * 60
 
-    STALE_AUTH_THRESHOLD_S = 24 * 60 * 60
+    STALE_AUTH_THRESHOLD_H = 24
     STALE_AUTH_REQUIRED_SUCCESSES = 5
 
     class _CriticalState:
@@ -310,14 +314,18 @@ class ProtonCLI:
             raise CLIError(msg) from e
         return self._CLIRun(id=uid, process=proc)
 
-    async def __get_auth(self) -> SimpleNamespace:
+    async def __get_auth(self) -> tuple[str, str]:
+        """Return the (uid, access token) pair."""
         try:
             async with aiofiles.open(self.__auth_session_path()) as f:
                 data = await f.read()
-            return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
-        except (OSError, json.JSONDecodeError) as e:
+            parsed = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+            uid = parsed.session.uid
+            access_token = parsed.session.accessToken
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError) as e:
             msg = f"Missing or corrupt auth session: {e}"
             raise AuthError(msg) from e
+        return uid, access_token
 
     def __auth_session_path(self) -> Path:
         return Path(self.__xdg) / "proton-drive-cli" / "auth-session.json"
@@ -331,7 +339,7 @@ class ProtonCLI:
         except OSError:
             return True
         age_s = time.time() - mtime
-        stale = age_s > self.STALE_AUTH_THRESHOLD_S
+        stale = age_s > self.STALE_AUTH_THRESHOLD_H * 60 * 60
         if stale:
             LOGGER.debug("Auth session file is stale (age: %.1fs)", age_s)
         return stale
@@ -386,11 +394,11 @@ class ProtonCLI:
     async def __api_call(self, verb: str, path: str, body: dict | None = None) -> SimpleNamespace:
         async with self.__serialize_if_auth_stale():
             try:
-                auth = await self.__get_auth()
+                pm_uid, access_token = await self.__get_auth()
                 headers = {
-                    "Authorization": f"Bearer {auth.session.accessToken}",
+                    "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
-                    "x-pm-uid": auth.session.uid,
+                    "x-pm-uid": pm_uid,
                     "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
                 }
                 async with self.__http_session() as session:
@@ -405,19 +413,22 @@ class ProtonCLI:
                     data = await res.text()
                     LOGGER.debug("[%s] API call response: %s %s %s", uid, res.status, res.headers, data)
                     res.raise_for_status()
-            except AttributeError as e:
-                msg = f"Missing or corrupt auth session calling {verb} {path}: {e}"
-                raise AuthError(msg) from e
+                return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
             except aiohttp.ClientResponseError as e:
                 if e.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                     msg = f"Authentication failed calling {verb} {path}: {e}"
                     raise AuthError(msg) from e
+                if e.status >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    msg = f"Proton API unavailable calling {verb} {path}: {e}"
+                    raise APIUnavailableError(msg) from e
                 msg = f"Failed to make API call: {verb} {path}"
                 raise CLIError(msg) from e
             except (aiohttp.ClientError, TimeoutError) as e:
-                msg = f"Failed to make API call: {verb} {path}"
+                msg = f"Failed to reach Proton API calling {verb} {path}: {e}"
+                raise APIUnavailableError(msg) from e
+            except json.JSONDecodeError as e:
+                msg = f"Failed to parse API response for {verb} {path}: {e}"
                 raise CLIError(msg) from e
-        return json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     async def run(
         self,
