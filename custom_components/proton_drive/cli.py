@@ -426,7 +426,14 @@ class ProtonCLI:
                     "x-pm-appversion": f"external-drive-ha_proton_drive@{self.__integration_version}",
                 }
                 async with self.__http_session() as session:
-                    LOGGER.debug("[%s] Making API call: %s %s, %s with body: %s", uid, verb, path, headers, body)
+                    LOGGER.debug(
+                        "[%s] Making API call: %s %s, %s with body: %s",
+                        uid,
+                        verb,
+                        path,
+                        {**headers, "Authorization": "******"},
+                        body,
+                    )
                     res = await session.request(
                         verb,
                         f"https://mail.proton.me/api{path}",
