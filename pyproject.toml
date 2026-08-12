@@ -6,7 +6,7 @@ version = "0"
 requires-python = ">=3.14.2"
 dependencies = [
   "aiofiles>=25.1.0",
-  "cachetools>=7.1.4",
+  "cachetools>=7.1.7",
   "cachetools-async>=0.0.5",
 ]
 
@@ -14,9 +14,9 @@ dependencies = [
 dev = [
   "pytest>=9.1.1",
   "pytest-asyncio>=1.4.0",
-  "ruff==0.15.22",
-  "tombi==1.2.4",
-  "ty==0.0.62",
+  "ruff==0.16.1",
+  "tombi==1.2.6",
+  "ty==0.0.66",
 ]
 docker = ["aiohasupervisor==0.6.0"]
 hass = ["homeassistant==2026.4.0"]
