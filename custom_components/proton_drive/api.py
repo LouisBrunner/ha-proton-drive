@@ -289,7 +289,7 @@ class ProtonDriveClient:
                         str(meta_path),
                         str(self.__backup_folder),
                         timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
-                        retries=0,
+                        retries=2,
                     ),
                     self.__cli.run(
                         "filesystem",
@@ -297,7 +297,7 @@ class ProtonDriveClient:
                         str(archive_path),
                         str(self.__backup_folder),
                         timeout_s=ProtonCLI.TRANSFER_TIMEOUT_S,
-                        retries=0,
+                        retries=2,
                     ),
                 )
             except CLIError:

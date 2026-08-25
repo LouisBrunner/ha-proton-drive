@@ -108,7 +108,7 @@ class ProtonCLI:
 
     DEFAULT_TIMEOUT_S = 10
     METADATA_TIMEOUT_S = 60
-    TRANSFER_TIMEOUT_S = 10 * 60
+    TRANSFER_TIMEOUT_S = 60 * 60
 
     STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
@@ -335,6 +335,13 @@ class ProtonCLI:
             raise CLIError(msg) from e
         return self._CLIRun(id=uid, process=proc)
 
+    def __kill_and_reap(self, run: _CLIRun) -> None:
+        run.process.kill()
+        # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+        reap_task = asyncio.create_task(run.process.wait())
+        self.__reap_tasks.add(reap_task)
+        reap_task.add_done_callback(self.__reap_tasks.discard)
+
     async def __get_auth(self) -> tuple[str, str]:
         """Return the (uid, access token) pair."""
         try:
@@ -477,11 +484,7 @@ class ProtonCLI:
                     async with asyncio.timeout(timeout_s):
                         stdout, stderr = await run.process.communicate()
                 except TimeoutError as e:
-                    run.process.kill()
-                    # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
-                    reap_task = asyncio.create_task(run.process.wait())
-                    self.__reap_tasks.add(reap_task)
-                    reap_task.add_done_callback(self.__reap_tasks.discard)
+                    self.__kill_and_reap(run)
                     if attempt >= retries:
                         msg = f"[{run.id}] Command timed out after {timeout_s}s"
                         raise CLITimeoutError(msg) from e
@@ -490,6 +493,11 @@ class ProtonCLI:
                         "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
                     )
                     continue
+                except asyncio.CancelledError:
+                    # e.g. our sibling in an asyncio.gather() failed: kill our own subprocess too,
+                    # otherwise it lingers and can crash later against files/state cleaned up by the caller.
+                    self.__kill_and_reap(run)
+                    raise
                 return self._process_run(run, stdout, stderr, is_json=is_json)
 
     @classmethod
