@@ -81,6 +81,10 @@ class APIUnavailableError(CLIError):
     """Exception to indicate a transient failure reaching the Proton API."""
 
 
+class CLIDatabaseLockedError(CLIError):
+    """Exception to indicate the CLI's local cache database was locked by a concurrent invocation."""
+
+
 def _transform_version(version: AwesomeVersion | None) -> str:
     """
     Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
@@ -498,19 +502,39 @@ class ProtonCLI:
                     # otherwise it lingers and can crash later against files/state cleaned up by the caller.
                     self.__kill_and_reap(run)
                     raise
-                return self._process_run(run, stdout, stderr, is_json=is_json)
+                try:
+                    return self._process_run(run, stdout, stderr, is_json=is_json)
+                except CLIDatabaseLockedError:
+                    if attempt >= retries:
+                        raise
+                    attempt += 1
+                    delay = min(0.2 * 2 ** (attempt - 1), 2)
+                    LOGGER.warning(
+                        "[%s] CLI cache database locked by a concurrent call, retrying (%d/%d) in %.1fs",
+                        run.id,
+                        attempt,
+                        retries,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
 
     @classmethod
     def _process_run(cls, run: _CLIRun, stdout: bytes, stderr: bytes, *, is_json: bool = True) -> Any:
         if run.process.returncode != 0:
+            stdout_text = stdout.decode()
+            stderr_text = stderr.decode()
             LOGGER.warning(
                 "[%s] CLI Result %d: stdout=%s, stderr=%s",
                 run.id,
                 run.process.returncode,
-                stdout.decode(),
-                stderr.decode(),
+                stdout_text,
+                stderr_text,
             )
-            msg = stderr.decode()
+            if "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text:
+                msg = f"[{run.id}] CLI cache database is locked"
+                raise CLIDatabaseLockedError(msg)
+            msg = stderr_text
             if "Node not found" in msg:
                 raise NodeNotFoundError(msg)
             # FIXME: odd but that's only explanation I can think of
