@@ -85,6 +85,10 @@ class CLIDatabaseLockedError(CLIError):
     """Exception to indicate the CLI's local cache database was locked by a concurrent invocation."""
 
 
+class NameConflictError(CLIError):
+    """Exception to indicate a file/folder with the target name already exists."""
+
+
 def _transform_version(version: AwesomeVersion | None) -> str:
     """
     Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
@@ -217,9 +221,15 @@ class ProtonCLI:
             await self.__download(hass, cached)
 
         try:
-            await self.run("version", is_json=False)
+            cli_version = await self.run("version", is_json=False)
         except CLIError as e:
             raise CLIStartupError(str(e)) from e
+        LOGGER.info(
+            "Proton Drive CLI ready: integration=%s, cli=%s (expected %s)",
+            self.__integration_version,
+            cli_version,
+            CLI_VERSION,
+        )
 
     @classmethod
     async def __get_platform(cls) -> tuple[str, str]:
@@ -340,21 +350,28 @@ class ProtonCLI:
             raise CLIError(msg) from e
         return self._CLIRun(id=uid, process=proc)
 
-    def __kill_and_reap(self, run: _CLIRun) -> None:
+    async def __terminate(self, run: _CLIRun) -> None:
         # Give the CLI a chance to exit on its own terms first: a hard SIGKILL can catch it
         # mid-write to its own on-disk state (e.g. its events lock file), corrupting it and
         # breaking every subsequent invocation until that file is manually removed.
-        async def _terminate() -> None:
-            run.process.terminate()
-            try:
-                async with asyncio.timeout(self.TERMINATE_GRACE_S):
-                    await run.process.wait()
-            except TimeoutError:
-                run.process.kill()
-                # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+        run.process.terminate()
+        try:
+            async with asyncio.timeout(self.TERMINATE_GRACE_S):
                 await run.process.wait()
+        except TimeoutError:
+            LOGGER.warning(
+                "[%s] Did not exit within %ss of SIGTERM, sending SIGKILL", run.id, self.TERMINATE_GRACE_S
+            )
+            run.process.kill()
+            # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+            await run.process.wait()
+        else:
+            LOGGER.debug("[%s] Exited cleanly after SIGTERM", run.id)
 
-        reap_task = asyncio.create_task(_terminate())
+    def __kill_and_reap(self, run: _CLIRun) -> None:
+        # Fire-and-forget: used from the timeout-retry loop, where blocking here would delay
+        # the next attempt by up to TERMINATE_GRACE_S for no benefit.
+        reap_task = asyncio.create_task(self.__terminate(run))
         self.__reap_tasks.add(reap_task)
         reap_task.add_done_callback(self.__reap_tasks.discard)
 
@@ -510,9 +527,11 @@ class ProtonCLI:
                     )
                     continue
                 except asyncio.CancelledError:
-                    # e.g. our sibling in an asyncio.gather() failed: kill our own subprocess too,
-                    # otherwise it lingers and can crash later against files/state cleaned up by the caller.
-                    self.__kill_and_reap(run)
+                    # e.g. we were explicitly cancelled because a sibling call failed: wait for our own
+                    # subprocess to actually die before propagating, so the caller can safely clean up
+                    # right after (files/state it deletes won't get pulled out from under a still-running
+                    # process). Unlike the timeout path above, blocking here briefly is fine and desired.
+                    await asyncio.shield(self.__terminate(run))
                     raise
                 try:
                     return self._process_run(run, stdout, stderr, is_json=is_json)
@@ -546,6 +565,9 @@ class ProtonCLI:
             if "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text:
                 msg = f"[{run.id}] CLI cache database is locked"
                 raise CLIDatabaseLockedError(msg)
+            if "Name conflict on" in stdout_text and "already exists" in stdout_text:
+                msg = f"[{run.id}] Name conflict: {stdout_text}"
+                raise NameConflictError(msg)
             msg = stderr_text
             if "Node not found" in msg:
                 raise NodeNotFoundError(msg)

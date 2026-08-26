@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from homeassistant.components.backup.util import suggested_filename
 
 from .cli import (
     CLIError,
+    NameConflictError,
     ProtonCLI,
 )
 from .const import DOMAIN, LOGGER
@@ -274,33 +276,51 @@ class ProtonDriveClient:
                     ),
                 )
 
+            write_start = time.monotonic()
             async with aiofiles.open(archive_path, "wb") as f:
                 async for chunk in await open_stream():
                     await f.write(chunk)
                     on_progress(bytes_uploaded=await f.tell() // 2)
                 size = await f.tell()
+            LOGGER.debug(
+                "Wrote local archive %s (%d bytes) in %.1fs, starting upload",
+                archive_name,
+                size,
+                time.monotonic() - write_start,
+            )
 
+            async def _upload(local_path: Path, timeout_s: float) -> None:
+                try:
+                    await self.__cli.run(
+                        "filesystem",
+                        "upload",
+                        str(local_path),
+                        str(self.__backup_folder),
+                        timeout_s=timeout_s,
+                        retries=2,
+                    )
+                except NameConflictError:
+                    # A retry of our own timed-out-but-actually-completed attempt: our filenames
+                    # embed the backup_id, so a conflict on our own name means we already uploaded it.
+                    LOGGER.info(
+                        "Upload of %s already completed (name conflict on retry), treating as success",
+                        local_path.name,
+                    )
+
+            # TODO: upload progress feedback is missing
+            upload_start = time.monotonic()
+            meta_task = asyncio.create_task(_upload(meta_path, ProtonCLI.METADATA_TIMEOUT_S))
+            archive_task = asyncio.create_task(_upload(archive_path, ProtonCLI.TRANSFER_TIMEOUT_S))
             try:
-                # TODO: upload progress feedback is missing
-                await asyncio.gather(
-                    self.__cli.run(
-                        "filesystem",
-                        "upload",
-                        str(meta_path),
-                        str(self.__backup_folder),
-                        timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
-                        retries=2,
-                    ),
-                    self.__cli.run(
-                        "filesystem",
-                        "upload",
-                        str(archive_path),
-                        str(self.__backup_folder),
-                        timeout_s=ProtonCLI.TRANSFER_TIMEOUT_S,
-                        retries=2,
-                    ),
-                )
+                await asyncio.gather(meta_task, archive_task)
             except CLIError:
+                # asyncio.gather() does NOT cancel a still-running sibling when one task raises on its
+                # own (only when gather() itself is cancelled) - without this, the other upload keeps
+                # running in the background against files we're about to delete below.
+                for task in (meta_task, archive_task):
+                    task.cancel()
+                await asyncio.gather(meta_task, archive_task, return_exceptions=True)
+
                 filenames = [Path(metadata_name), Path(archive_name)]
                 LOGGER.exception("Failed to upload backup: %s, deleting...", filenames)
 
@@ -316,6 +336,7 @@ class ProtonDriveClient:
                     LOGGER.exception("Failed to clean up orphaned files after upload failure")
                 raise
 
+            LOGGER.debug("Uploaded %s in %.1fs", archive_name, time.monotonic() - upload_start)
             on_progress(bytes_uploaded=size)
 
     async def delete_backup(self, backup_id: str) -> None:
