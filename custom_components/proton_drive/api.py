@@ -309,7 +309,7 @@ class ProtonDriveClient:
                     to_delete = [f for f in to_delete if await self.__cli.exists(f)]
                     await self.__cli.trash(*to_delete)
 
-                    if self.__can_delete_file(self.__backup_folder):
+                    if to_delete and self.__can_delete_file(self.__backup_folder):
                         trash = Path("/trash")
                         await self.__cli.run("filesystem", "delete", *[str(trash / Path(f).name) for f in to_delete])
                 except CLIError:
@@ -365,8 +365,24 @@ class ProtonDriveClient:
         """List Home Assistant backups."""
         files = await self.__cli.list_files(self.__backup_folder)
         metadata_suffix = self.__make_metadata_filename("", "")
+        archive_suffix = self.__make_backup_filename("", "")
         LOGGER.debug("Looking for metadata files with suffix: %s", metadata_suffix)
         metadata_files = [f for f in files if f.endswith(metadata_suffix)]
+        archive_files = [f for f in files if f.endswith(archive_suffix)]
+
+        file_set = set(files)
+        orphans = [f for f in metadata_files if not self.__has_matching_archive(f, files)]
+        orphans.extend(
+            f for f in archive_files if f.removesuffix(self.ARCHIVE_EXT) + self.METADATA_EXT not in file_set
+        )
+        if orphans:
+            LOGGER.warning("Trashing orphaned backup file(s) with no counterpart: %s", orphans)
+            try:
+                await self.__cli.trash(*map(self.__make_filepath, orphans))
+            except CLIError:
+                LOGGER.exception("Failed to trash orphaned backup files")
+
+        live_metadata_files = [f for f in metadata_files if f not in orphans]
 
         async def _fetch(filename: str) -> AgentBackup | None:
             try:
@@ -378,8 +394,14 @@ class ProtonDriveClient:
                 LOGGER.exception("Failed to read metadata %s", filename)
                 return None
 
-        results = await asyncio.gather(*[_fetch(f) for f in metadata_files])
+        results = await asyncio.gather(*[_fetch(f) for f in live_metadata_files])
         return [r for r in results if r is not None]
+
+    def __has_matching_archive(self, metadata_file: str, files: list[str]) -> bool:
+        # Chunked backups store their archive as numbered `NN.tar.part` files instead of a
+        # plain `.tar`, so we can't just check for one exact filename.
+        prefix = metadata_file.removesuffix(self.METADATA_EXT)
+        return any(f.startswith(prefix) and (f.endswith(self.ARCHIVE_EXT) or f.endswith(self.PART_EXT)) for f in files)
 
     @cached(cache=TTLCache(maxsize=1024, ttl=300))
     async def __read_metadata(self, metadata_file: str) -> Metadata | dict:
