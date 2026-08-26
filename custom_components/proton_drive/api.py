@@ -393,9 +393,7 @@ class ProtonDriveClient:
 
         file_set = set(files)
         orphans = [f for f in metadata_files if not self.__has_matching_archive(f, files)]
-        orphans.extend(
-            f for f in archive_files if f.removesuffix(self.ARCHIVE_EXT) + self.METADATA_EXT not in file_set
-        )
+        orphans.extend(f for f in archive_files if f.removesuffix(self.ARCHIVE_EXT) + self.METADATA_EXT not in file_set)
         if orphans:
             LOGGER.warning("Trashing orphaned backup file(s) with no counterpart: %s", orphans)
             try:
@@ -422,7 +420,7 @@ class ProtonDriveClient:
         # Chunked backups store their archive as numbered `NN.tar.part` files instead of a
         # plain `.tar`, so we can't just check for one exact filename.
         prefix = metadata_file.removesuffix(self.METADATA_EXT)
-        return any(f.startswith(prefix) and (f.endswith(self.ARCHIVE_EXT) or f.endswith(self.PART_EXT)) for f in files)
+        return any(f.startswith(prefix) and f.endswith((self.ARCHIVE_EXT, self.PART_EXT)) for f in files)
 
     @cached(cache=TTLCache(maxsize=1024, ttl=300))
     async def __read_metadata(self, metadata_file: str) -> Metadata | dict:

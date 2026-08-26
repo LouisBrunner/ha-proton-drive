@@ -359,9 +359,7 @@ class ProtonCLI:
             async with asyncio.timeout(self.TERMINATE_GRACE_S):
                 await run.process.wait()
         except TimeoutError:
-            LOGGER.warning(
-                "[%s] Did not exit within %ss of SIGTERM, sending SIGKILL", run.id, self.TERMINATE_GRACE_S
-            )
+            LOGGER.warning("[%s] Did not exit within %ss of SIGTERM, sending SIGKILL", run.id, self.TERMINATE_GRACE_S)
             run.process.kill()
             # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
             await run.process.wait()
