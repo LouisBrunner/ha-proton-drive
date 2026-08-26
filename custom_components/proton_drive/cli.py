@@ -555,21 +555,31 @@ class ProtonCLI:
         if run.process.returncode != 0:
             stdout_text = stdout.decode()
             stderr_text = stderr.decode()
-            LOGGER.warning(
+
+            is_db_locked = "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text
+            is_name_conflict = "Name conflict on" in stdout_text and "already exists" in stdout_text
+            is_not_found = "Node not found" in stderr_text
+
+            # These are conditions the caller already expects and handles on its own (a retry, or
+            # treating it as non-fatal) - a WARNING for every occurrence is just noise; DEBUG still
+            # keeps the detail on hand if it's actually needed.
+            log = LOGGER.debug if (is_db_locked or is_name_conflict or is_not_found) else LOGGER.warning
+            log(
                 "[%s] CLI Result %d: stdout=%s, stderr=%s",
                 run.id,
                 run.process.returncode,
                 stdout_text,
                 stderr_text,
             )
-            if "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text:
+
+            if is_db_locked:
                 msg = f"[{run.id}] CLI cache database is locked"
                 raise CLIDatabaseLockedError(msg)
-            if "Name conflict on" in stdout_text and "already exists" in stdout_text:
+            if is_name_conflict:
                 msg = f"[{run.id}] Name conflict: {stdout_text}"
                 raise NameConflictError(msg)
             msg = stderr_text
-            if "Node not found" in msg:
+            if is_not_found:
                 raise NodeNotFoundError(msg)
             # FIXME: odd but that's only explanation I can think of
             if "You need to login first" in msg or "Root node not found" in msg:
