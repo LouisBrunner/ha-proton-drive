@@ -194,7 +194,7 @@ class ProtonCLI:
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
-        self.__reap_tasks: set[asyncio.Task[int]] = set()
+        self.__reap_tasks: set[asyncio.Task[None]] = set()
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
