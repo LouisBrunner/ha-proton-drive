@@ -113,6 +113,7 @@ class ProtonCLI:
     DEFAULT_TIMEOUT_S = 10
     METADATA_TIMEOUT_S = 60
     TRANSFER_TIMEOUT_S = 60 * 60
+    TERMINATE_GRACE_S = 5
 
     STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
@@ -340,9 +341,20 @@ class ProtonCLI:
         return self._CLIRun(id=uid, process=proc)
 
     def __kill_and_reap(self, run: _CLIRun) -> None:
-        run.process.kill()
-        # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
-        reap_task = asyncio.create_task(run.process.wait())
+        # Give the CLI a chance to exit on its own terms first: a hard SIGKILL can catch it
+        # mid-write to its own on-disk state (e.g. its events lock file), corrupting it and
+        # breaking every subsequent invocation until that file is manually removed.
+        async def _terminate() -> None:
+            run.process.terminate()
+            try:
+                async with asyncio.timeout(self.TERMINATE_GRACE_S):
+                    await run.process.wait()
+            except TimeoutError:
+                run.process.kill()
+                # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+                await run.process.wait()
+
+        reap_task = asyncio.create_task(_terminate())
         self.__reap_tasks.add(reap_task)
         reap_task.add_done_callback(self.__reap_tasks.discard)
 
