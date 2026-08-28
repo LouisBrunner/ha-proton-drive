@@ -81,6 +81,14 @@ class APIUnavailableError(CLIError):
     """Exception to indicate a transient failure reaching the Proton API."""
 
 
+class CLIDatabaseLockedError(CLIError):
+    """Exception to indicate the CLI's local cache database was locked by a concurrent invocation."""
+
+
+class NameConflictError(CLIError):
+    """Exception to indicate a file/folder with the target name already exists."""
+
+
 def _transform_version(version: AwesomeVersion | None) -> str:
     """
     Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
@@ -108,7 +116,8 @@ class ProtonCLI:
 
     DEFAULT_TIMEOUT_S = 10
     METADATA_TIMEOUT_S = 60
-    TRANSFER_TIMEOUT_S = 10 * 60
+    TRANSFER_TIMEOUT_S = 60 * 60
+    TERMINATE_GRACE_S = 5
 
     STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
@@ -185,7 +194,7 @@ class ProtonCLI:
         self.__xdg = hass.config.cache_path(DOMAIN, "xdg")
         self.__path = hass.config.cache_path(DOMAIN, "proton-drive")
         self.__integration_version = integration_version
-        self.__reap_tasks: set[asyncio.Task[int]] = set()
+        self.__reap_tasks: set[asyncio.Task[None]] = set()
 
     @classmethod
     async def create(cls, hass: HomeAssistant) -> ProtonCLI:
@@ -212,9 +221,15 @@ class ProtonCLI:
             await self.__download(hass, cached)
 
         try:
-            await self.run("version", is_json=False)
+            cli_version = await self.run("version", is_json=False)
         except CLIError as e:
             raise CLIStartupError(str(e)) from e
+        LOGGER.info(
+            "Proton Drive CLI ready: integration=%s, cli=%s (expected %s)",
+            self.__integration_version,
+            cli_version,
+            CLI_VERSION,
+        )
 
     @classmethod
     async def __get_platform(cls) -> tuple[str, str]:
@@ -334,6 +349,29 @@ class ProtonCLI:
             msg = f"Failed to run Proton Drive CLI: {e}"
             raise CLIError(msg) from e
         return self._CLIRun(id=uid, process=proc)
+
+    async def __terminate(self, run: _CLIRun) -> None:
+        # Give the CLI a chance to exit on its own terms first: a hard SIGKILL can catch it
+        # mid-write to its own on-disk state (e.g. its events lock file), corrupting it and
+        # breaking every subsequent invocation until that file is manually removed.
+        run.process.terminate()
+        try:
+            async with asyncio.timeout(self.TERMINATE_GRACE_S):
+                await run.process.wait()
+        except TimeoutError:
+            LOGGER.warning("[%s] Did not exit within %ss of SIGTERM, sending SIGKILL", run.id, self.TERMINATE_GRACE_S)
+            run.process.kill()
+            # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
+            await run.process.wait()
+        else:
+            LOGGER.debug("[%s] Exited cleanly after SIGTERM", run.id)
+
+    def __kill_and_reap(self, run: _CLIRun) -> None:
+        # Fire-and-forget: used from the timeout-retry loop, where blocking here would delay
+        # the next attempt by up to TERMINATE_GRACE_S for no benefit.
+        reap_task = asyncio.create_task(self.__terminate(run))
+        self.__reap_tasks.add(reap_task)
+        reap_task.add_done_callback(self.__reap_tasks.discard)
 
     async def __get_auth(self) -> tuple[str, str]:
         """Return the (uid, access token) pair."""
@@ -477,11 +515,7 @@ class ProtonCLI:
                     async with asyncio.timeout(timeout_s):
                         stdout, stderr = await run.process.communicate()
                 except TimeoutError as e:
-                    run.process.kill()
-                    # awaiting wait() here can block as long as the timeout itself: https://github.com/python/cpython/issues/139373
-                    reap_task = asyncio.create_task(run.process.wait())
-                    self.__reap_tasks.add(reap_task)
-                    reap_task.add_done_callback(self.__reap_tasks.discard)
+                    self.__kill_and_reap(run)
                     if attempt >= retries:
                         msg = f"[{run.id}] Command timed out after {timeout_s}s"
                         raise CLITimeoutError(msg) from e
@@ -490,20 +524,60 @@ class ProtonCLI:
                         "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
                     )
                     continue
-                return self._process_run(run, stdout, stderr, is_json=is_json)
+                except asyncio.CancelledError:
+                    # e.g. we were explicitly cancelled because a sibling call failed: wait for our own
+                    # subprocess to actually die before propagating, so the caller can safely clean up
+                    # right after (files/state it deletes won't get pulled out from under a still-running
+                    # process). Unlike the timeout path above, blocking here briefly is fine and desired.
+                    await asyncio.shield(self.__terminate(run))
+                    raise
+                try:
+                    return self._process_run(run, stdout, stderr, is_json=is_json)
+                except CLIDatabaseLockedError:
+                    if attempt >= retries:
+                        raise
+                    attempt += 1
+                    delay = min(0.2 * 2 ** (attempt - 1), 2)
+                    LOGGER.debug(
+                        "[%s] CLI cache database locked by a concurrent call, retrying (%d/%d) in %.1fs",
+                        run.id,
+                        attempt,
+                        retries,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
 
     @classmethod
     def _process_run(cls, run: _CLIRun, stdout: bytes, stderr: bytes, *, is_json: bool = True) -> Any:
         if run.process.returncode != 0:
-            LOGGER.warning(
+            stdout_text = stdout.decode()
+            stderr_text = stderr.decode()
+
+            is_db_locked = "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text
+            is_name_conflict = "Name conflict on" in stdout_text and "already exists" in stdout_text
+            is_not_found = "Node not found" in stderr_text
+
+            # These are conditions the caller already expects and handles on its own (a retry, or
+            # treating it as non-fatal) - a WARNING for every occurrence is just noise; DEBUG still
+            # keeps the detail on hand if it's actually needed.
+            log = LOGGER.debug if (is_db_locked or is_name_conflict or is_not_found) else LOGGER.warning
+            log(
                 "[%s] CLI Result %d: stdout=%s, stderr=%s",
                 run.id,
                 run.process.returncode,
-                stdout.decode(),
-                stderr.decode(),
+                stdout_text,
+                stderr_text,
             )
-            msg = stderr.decode()
-            if "Node not found" in msg:
+
+            if is_db_locked:
+                msg = f"[{run.id}] CLI cache database is locked"
+                raise CLIDatabaseLockedError(msg)
+            if is_name_conflict:
+                msg = f"[{run.id}] Name conflict: {stdout_text}"
+                raise NameConflictError(msg)
+            msg = stderr_text
+            if is_not_found:
                 raise NodeNotFoundError(msg)
             # FIXME: odd but that's only explanation I can think of
             if "You need to login first" in msg or "Root node not found" in msg:
