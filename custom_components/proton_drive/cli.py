@@ -538,7 +538,7 @@ class ProtonCLI:
                         raise
                     attempt += 1
                     delay = min(0.2 * 2 ** (attempt - 1), 2)
-                    LOGGER.warning(
+                    LOGGER.debug(
                         "[%s] CLI cache database locked by a concurrent call, retrying (%d/%d) in %.1fs",
                         run.id,
                         attempt,
