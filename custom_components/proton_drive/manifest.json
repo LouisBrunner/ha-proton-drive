@@ -1,13 +1,8 @@
 {
 	"domain": "proton_drive",
 	"name": "Proton Drive",
-	"after_dependencies": [
-		"http",
-		"backup"
-	],
-	"codeowners": [
-		"@LouisBrunner"
-	],
+	"after_dependencies": ["http", "backup"],
+	"codeowners": ["@LouisBrunner"],
 	"config_flow": true,
 	"documentation": "https://github.com/LouisBrunner/ha-proton-drive",
 	"integration_type": "service",
