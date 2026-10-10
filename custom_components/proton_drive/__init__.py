@@ -14,6 +14,7 @@ from homeassistant.helpers import instance_id
 
 from .api import (
     ProtonDriveClient,
+    ProtonDriveError,
 )
 from .cli import (
     APIUnavailableError,
@@ -86,7 +87,7 @@ async def _create_client(hass: HomeAssistant, entry: ProtonDriveConfigEntry, cli
         raise ConfigEntryAuthFailed(str(e)) from e
     except APIUnavailableError as e:
         raise ConfigEntryNotReady(str(e)) from e
-    except CLIError as e:
+    except (CLIError, ProtonDriveError) as e:
         raise ConfigEntryError(str(e)) from e
 
 

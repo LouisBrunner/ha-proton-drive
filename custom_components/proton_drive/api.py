@@ -21,6 +21,7 @@ from homeassistant.components.backup.util import suggested_filename
 
 from .cli import (
     CLIError,
+    CLITimeoutError,
     NameConflictError,
     ProtonCLI,
 )
@@ -141,15 +142,27 @@ class ProtonDriveClient:
     async def __prepare(self) -> None:
         await self.__cli.get_email()
 
-        if not await self.__cli.exists(self.__backup_folder):
-            LOGGER.info("Backup folder not found, trying to create")
-            await self.__cli.run(
-                "filesystem",
-                "create-folder",
-                str(self.__backup_folder.parent),
-                self.__backup_folder.name,
-            )
+        if not self.__backup_folder.is_absolute() or len(self.__backup_folder.parts) < 2:  # noqa: PLR2004
+            msg = f"Invalid backup folder '{self.__backup_folder}': must be a full path like /my-files/HomeAssistant"
+            raise ProtonDriveError(msg)
+        await self.__ensure_folder(self.__backup_folder)
         await aiofiles.os.makedirs(self.__temp_backup_dir, exist_ok=True)
+
+    async def __ensure_folder(self, folder: Path) -> None:
+        """Create `folder` and any missing parents (drive roots like /my-files can't be created)."""
+        if await self.__cli.exists(folder):
+            return
+        if folder.parent == Path("/"):
+            msg = f"Proton Drive root '{folder}' does not exist, use one like /my-files"
+            raise ProtonDriveError(msg)
+        await self.__ensure_folder(folder.parent)
+        LOGGER.info("Folder %s not found, creating it", folder)
+        await self.__cli.run(
+            "filesystem",
+            "create-folder",
+            str(folder.parent),
+            folder.name,
+        )
 
     async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:
         """Download a Home Assistant backup."""
@@ -424,16 +437,28 @@ class ProtonDriveClient:
 
     @cached(cache=TTLCache(maxsize=1024, ttl=300))
     async def __read_metadata(self, metadata_file: str) -> Metadata | dict:
-        async with self.__temp_folder() as path:
-            await self.__cli.run(
-                "filesystem",
-                "download",
-                self.__make_filepath(metadata_file),
-                str(path),
-                timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
-            )
-            async with aiofiles.open(path / metadata_file) as f:
-                data = await f.read()
+        attempts = 3
+        for attempt in range(1, attempts + 1):
+            # Each attempt gets a fresh temp destination: a timed-out download is killed after it may
+            # already have created the local file, so retrying into the same path fails with a name
+            # conflict (which the CLI's own retry loop cannot recover from).
+            try:
+                async with self.__temp_folder() as path:
+                    await self.__cli.run(
+                        "filesystem",
+                        "download",
+                        self.__make_filepath(metadata_file),
+                        str(path),
+                        timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
+                        retries=0,
+                    )
+                    async with aiofiles.open(path / metadata_file) as f:
+                        data = await f.read()
+            except (CLITimeoutError, NameConflictError):
+                if attempt >= attempts:
+                    raise
+                LOGGER.debug("Retrying metadata download of %s (%d/%d)", metadata_file, attempt, attempts)
+                continue
             try:
                 json_data = json.loads(data)
             except json.JSONDecodeError as e:
@@ -441,6 +466,8 @@ class ProtonDriveClient:
                 msg = "Failed to parse metadata JSON"
                 raise ProtonDriveInvalidBackupError(msg) from e
             return Metadata.load(json_data)
+        msg = f"Failed to download metadata {metadata_file}"
+        raise CLIError(msg)
 
     def __make_metadata_filename(self, base: str, backup_id: str) -> str:
         return self.__make_filename(base, backup_id, self.METADATA_EXT[1:])
