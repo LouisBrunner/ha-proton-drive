@@ -118,6 +118,7 @@ class ProtonCLI:
     METADATA_TIMEOUT_S = 60
     TRANSFER_TIMEOUT_S = 60 * 60
     TERMINATE_GRACE_S = 5
+    LOCK_RETRIES = 5
 
     STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
@@ -507,6 +508,7 @@ class ProtonCLI:
     ) -> Any:
         """Run a CLI command and return the parsed JSON output."""
         attempt = 0
+        lock_attempt = 0
         uid = uuid4().hex[:8]
         async with self.__serialize_if_auth_stale(uid):
             while True:
@@ -515,10 +517,13 @@ class ProtonCLI:
                     async with asyncio.timeout(timeout_s):
                         stdout, stderr = await run.process.communicate()
                 except TimeoutError as e:
-                    self.__kill_and_reap(run)
                     if attempt >= retries:
+                        self.__kill_and_reap(run)
                         msg = f"[{run.id}] Command timed out after {timeout_s}s"
                         raise CLITimeoutError(msg) from e
+                    # Wait for the old process to really exit before retrying: while it lingers
+                    # it can still hold the CLI's cache database lock, making the retry fail with SQLITE_BUSY.
+                    await asyncio.shield(self.__terminate(run))
                     attempt += 1
                     LOGGER.warning(
                         "[%s] Command timed out after %ss, retrying (%d/%d)", run.id, timeout_s, attempt, retries
@@ -534,15 +539,17 @@ class ProtonCLI:
                 try:
                     return self._process_run(run, stdout, stderr, is_json=is_json)
                 except CLIDatabaseLockedError:
-                    if attempt >= retries:
+                    # Separate budget from timeouts (a timeout often leaves the lock held for a moment),
+                    # with a backoff long enough to outlast a dying process's SIGTERM grace period.
+                    if lock_attempt >= self.LOCK_RETRIES:
                         raise
-                    attempt += 1
-                    delay = min(0.2 * 2 ** (attempt - 1), 2)
+                    lock_attempt += 1
+                    delay = min(0.5 * 2 ** (lock_attempt - 1), 4)
                     LOGGER.debug(
                         "[%s] CLI cache database locked by a concurrent call, retrying (%d/%d) in %.1fs",
                         run.id,
-                        attempt,
-                        retries,
+                        lock_attempt,
+                        self.LOCK_RETRIES,
                         delay,
                     )
                     await asyncio.sleep(delay)
