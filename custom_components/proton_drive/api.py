@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -20,6 +21,8 @@ from homeassistant.components.backup.util import suggested_filename
 
 from .cli import (
     CLIError,
+    CLITimeoutError,
+    NameConflictError,
     ProtonCLI,
 )
 from .const import DOMAIN, LOGGER
@@ -96,6 +99,7 @@ class ProtonDriveClient:
     ARCHIVE_EXT = ".tar"
     PART_EXT = f"{ARCHIVE_EXT}.part"
     READ_CHUNK = 131_072
+    UPLOAD_PROGRESS_INTERVAL_S = 2
     DOWNLOAD_WINDOW = 4
     ALLOWED_DELETE_PREFIXES: ClassVar[list[Path]] = [
         Path("/my-files/"),
@@ -139,15 +143,27 @@ class ProtonDriveClient:
     async def __prepare(self) -> None:
         await self.__cli.get_email()
 
-        if not await self.__cli.exists(self.__backup_folder):
-            LOGGER.info("Backup folder not found, trying to create")
-            await self.__cli.run(
-                "filesystem",
-                "create-folder",
-                str(self.__backup_folder.parent),
-                self.__backup_folder.name,
-            )
+        if not self.__backup_folder.is_absolute() or len(self.__backup_folder.parts) < 2:  # noqa: PLR2004
+            msg = f"Invalid backup folder '{self.__backup_folder}': must be a full path like /my-files/HomeAssistant"
+            raise ProtonDriveError(msg)
+        await self.__ensure_folder(self.__backup_folder)
         await aiofiles.os.makedirs(self.__temp_backup_dir, exist_ok=True)
+
+    async def __ensure_folder(self, folder: Path) -> None:
+        """Create `folder` and any missing parents (drive roots like /my-files can't be created)."""
+        if await self.__cli.exists(folder):
+            return
+        if folder.parent == Path("/"):
+            msg = f"Proton Drive root '{folder}' does not exist, use one like /my-files"
+            raise ProtonDriveError(msg)
+        await self.__ensure_folder(folder.parent)
+        LOGGER.info("Folder %s not found, creating it", folder)
+        await self.__cli.run(
+            "filesystem",
+            "create-folder",
+            str(folder.parent),
+            folder.name,
+        )
 
     async def download_backup(self, backup_id: str) -> AsyncIterator[bytes]:
         """Download a Home Assistant backup."""
@@ -236,7 +252,7 @@ class ProtonDriveClient:
                     yield chunk
             LOGGER.debug("Finished yielding file %d/%d: %s", i + 1, len(files), name)
 
-    async def upload_backup(
+    async def upload_backup(  # noqa: PLR0915
         self,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
@@ -274,33 +290,60 @@ class ProtonDriveClient:
                     ),
                 )
 
+            write_start = time.monotonic()
             async with aiofiles.open(archive_path, "wb") as f:
                 async for chunk in await open_stream():
                     await f.write(chunk)
                     on_progress(bytes_uploaded=await f.tell() // 2)
                 size = await f.tell()
+            LOGGER.debug(
+                "Wrote local archive %s (%d bytes) in %.1fs, starting upload",
+                archive_name,
+                size,
+                time.monotonic() - write_start,
+            )
 
+            archive_pid: int | None = None
+
+            def _on_archive_start(pid: int) -> None:
+                nonlocal archive_pid
+                archive_pid = pid
+
+            async def _upload(local_path: Path, timeout_s: float) -> None:
+                try:
+                    await self.__cli.run(
+                        "filesystem",
+                        "upload",
+                        str(local_path),
+                        str(self.__backup_folder),
+                        timeout_s=timeout_s,
+                        retries=2,
+                        on_start=_on_archive_start if local_path == archive_path else None,
+                    )
+                except NameConflictError:
+                    # A retry of our own timed-out-but-actually-completed attempt: our filenames
+                    # embed the backup_id, so a conflict on our own name means we already uploaded it.
+                    LOGGER.info(
+                        "Upload of %s already completed (name conflict on retry), treating as success",
+                        local_path.name,
+                    )
+
+            upload_start = time.monotonic()
+            meta_task = asyncio.create_task(_upload(meta_path, ProtonCLI.METADATA_TIMEOUT_S))
+            archive_task = asyncio.create_task(_upload(archive_path, ProtonCLI.TRANSFER_TIMEOUT_S))
+            progress_task = asyncio.create_task(
+                self.__report_upload_progress(lambda: archive_pid, archive_path, size, on_progress)
+            )
             try:
-                # TODO: upload progress feedback is missing
-                await asyncio.gather(
-                    self.__cli.run(
-                        "filesystem",
-                        "upload",
-                        str(meta_path),
-                        str(self.__backup_folder),
-                        timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
-                        retries=0,
-                    ),
-                    self.__cli.run(
-                        "filesystem",
-                        "upload",
-                        str(archive_path),
-                        str(self.__backup_folder),
-                        timeout_s=ProtonCLI.TRANSFER_TIMEOUT_S,
-                        retries=0,
-                    ),
-                )
+                await asyncio.gather(meta_task, archive_task)
             except CLIError:
+                # asyncio.gather() does NOT cancel a still-running sibling when one task raises on its
+                # own (only when gather() itself is cancelled) - without this, the other upload keeps
+                # running in the background against files we're about to delete below.
+                for task in (meta_task, archive_task):
+                    task.cancel()
+                await asyncio.gather(meta_task, archive_task, return_exceptions=True)
+
                 filenames = [Path(metadata_name), Path(archive_name)]
                 LOGGER.exception("Failed to upload backup: %s, deleting...", filenames)
 
@@ -309,13 +352,16 @@ class ProtonDriveClient:
                     to_delete = [f for f in to_delete if await self.__cli.exists(f)]
                     await self.__cli.trash(*to_delete)
 
-                    if self.__can_delete_file(self.__backup_folder):
+                    if to_delete and self.__can_delete_file(self.__backup_folder):
                         trash = Path("/trash")
                         await self.__cli.run("filesystem", "delete", *[str(trash / Path(f).name) for f in to_delete])
                 except CLIError:
                     LOGGER.exception("Failed to clean up orphaned files after upload failure")
                 raise
+            finally:
+                progress_task.cancel()
 
+            LOGGER.debug("Uploaded %s in %.1fs", archive_name, time.monotonic() - upload_start)
             on_progress(bytes_uploaded=size)
 
     async def delete_backup(self, backup_id: str) -> None:
@@ -357,6 +403,44 @@ class ProtonDriveClient:
         to_delete = [f for f in to_delete if await self.__cli.exists(f)]
         await self.__cli.trash(*to_delete)
 
+    async def __report_upload_progress(
+        self,
+        get_pid: Callable[[], int | None],
+        path: Path,
+        size: int,
+        on_progress: OnProgressCallback,
+    ) -> None:
+        # The CLI reports no progress in --json mode, so infer it from how far into the archive
+        # file the process has read (second half of the bar; the first half is the local copy).
+        last = -1
+        while True:
+            await asyncio.sleep(self.UPLOAD_PROGRESS_INTERVAL_S)
+            pid = get_pid()
+            if pid is None:
+                continue
+            offset = await asyncio.to_thread(self.__read_offset, pid, path)
+            if offset is not None and offset != last:
+                last = offset
+                on_progress(bytes_uploaded=size // 2 + min(offset, size) // 2)
+
+    @staticmethod
+    def __read_offset(pid: int, path: Path) -> int | None:
+        """Return the current read offset of `pid` in the file at `path` (Linux only), if it has it open."""
+        fd_dir = Path("/proc") / str(pid) / "fd"
+        try:
+            for fd in fd_dir.iterdir():
+                try:
+                    if fd.readlink() != path:
+                        continue
+                    for line in (Path("/proc") / str(pid) / "fdinfo" / fd.name).read_text().splitlines():
+                        if line.startswith("pos:"):
+                            return int(line.split()[1])
+                except OSError, ValueError:
+                    continue
+        except OSError:
+            return None
+        return None
+
     def __can_delete_file(self, filename: Path) -> bool:
         # FIXME: see https://github.com/ProtonDriveApps/sdk/blob/main/cli/src/commands/fileSystem/commandFileSystemTrash.ts#L3
         return any(filename.is_relative_to(prefix) for prefix in self.ALLOWED_DELETE_PREFIXES)
@@ -365,8 +449,22 @@ class ProtonDriveClient:
         """List Home Assistant backups."""
         files = await self.__cli.list_files(self.__backup_folder)
         metadata_suffix = self.__make_metadata_filename("", "")
+        archive_suffix = self.__make_backup_filename("", "")
         LOGGER.debug("Looking for metadata files with suffix: %s", metadata_suffix)
         metadata_files = [f for f in files if f.endswith(metadata_suffix)]
+        archive_files = [f for f in files if f.endswith(archive_suffix)]
+
+        file_set = set(files)
+        orphans = [f for f in metadata_files if not self.__has_matching_archive(f, files)]
+        orphans.extend(f for f in archive_files if f.removesuffix(self.ARCHIVE_EXT) + self.METADATA_EXT not in file_set)
+        if orphans:
+            LOGGER.warning("Trashing orphaned backup file(s) with no counterpart: %s", orphans)
+            try:
+                await self.__cli.trash(*map(self.__make_filepath, orphans))
+            except CLIError:
+                LOGGER.exception("Failed to trash orphaned backup files")
+
+        live_metadata_files = [f for f in metadata_files if f not in orphans]
 
         async def _fetch(filename: str) -> AgentBackup | None:
             try:
@@ -378,21 +476,39 @@ class ProtonDriveClient:
                 LOGGER.exception("Failed to read metadata %s", filename)
                 return None
 
-        results = await asyncio.gather(*[_fetch(f) for f in metadata_files])
+        results = await asyncio.gather(*[_fetch(f) for f in live_metadata_files])
         return [r for r in results if r is not None]
+
+    def __has_matching_archive(self, metadata_file: str, files: list[str]) -> bool:
+        # Chunked backups store their archive as numbered `NN.tar.part` files instead of a
+        # plain `.tar`, so we can't just check for one exact filename.
+        prefix = metadata_file.removesuffix(self.METADATA_EXT)
+        return any(f.startswith(prefix) and f.endswith((self.ARCHIVE_EXT, self.PART_EXT)) for f in files)
 
     @cached(cache=TTLCache(maxsize=1024, ttl=300))
     async def __read_metadata(self, metadata_file: str) -> Metadata | dict:
-        async with self.__temp_folder() as path:
-            await self.__cli.run(
-                "filesystem",
-                "download",
-                self.__make_filepath(metadata_file),
-                str(path),
-                timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
-            )
-            async with aiofiles.open(path / metadata_file) as f:
-                data = await f.read()
+        attempts = 3
+        for attempt in range(1, attempts + 1):
+            # Each attempt gets a fresh temp destination: a timed-out download is killed after it may
+            # already have created the local file, so retrying into the same path fails with a name
+            # conflict (which the CLI's own retry loop cannot recover from).
+            try:
+                async with self.__temp_folder() as path:
+                    await self.__cli.run(
+                        "filesystem",
+                        "download",
+                        self.__make_filepath(metadata_file),
+                        str(path),
+                        timeout_s=ProtonCLI.METADATA_TIMEOUT_S,
+                        retries=0,
+                    )
+                    async with aiofiles.open(path / metadata_file) as f:
+                        data = await f.read()
+            except CLITimeoutError, NameConflictError:
+                if attempt >= attempts:
+                    raise
+                LOGGER.debug("Retrying metadata download of %s (%d/%d)", metadata_file, attempt, attempts)
+                continue
             try:
                 json_data = json.loads(data)
             except json.JSONDecodeError as e:
@@ -400,6 +516,8 @@ class ProtonDriveClient:
                 msg = "Failed to parse metadata JSON"
                 raise ProtonDriveInvalidBackupError(msg) from e
             return Metadata.load(json_data)
+        msg = f"Failed to download metadata {metadata_file}"
+        raise CLIError(msg)
 
     def __make_metadata_filename(self, base: str, backup_id: str) -> str:
         return self.__make_filename(base, backup_id, self.METADATA_EXT[1:])

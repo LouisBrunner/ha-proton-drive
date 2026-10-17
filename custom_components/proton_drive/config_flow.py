@@ -203,15 +203,20 @@ class ProtonDriveFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_backup_folder(self, user_input: dict | None = None) -> config_entries.ConfigFlowResult:
         """Handle the backup folder step."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            self.__backup_folder = user_input[CONF_BACKUP_FOLDER]
-            return await self.__finish()
+            folder = Path(user_input[CONF_BACKUP_FOLDER].strip())
+            self.__backup_folder = str(folder)
+            if folder.is_absolute() and len(folder.parts) >= 2:  # noqa: PLR2004
+                return await self.__finish()
+            errors[CONF_BACKUP_FOLDER] = "invalid_folder"
 
         assert self.__cli is not None  # noqa: S101
         options = await self.__get_folder_options(self.__backup_folder)
         return self.async_show_form(
             step_id="backup_folder",
             data_schema=_form_backup_folder(backup_folder=self.__backup_folder, options=options),
+            errors=errors,
         )
 
     async def __get_folder_options(self, backup_folder: str) -> list[str]:

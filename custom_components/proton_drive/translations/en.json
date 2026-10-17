@@ -10,6 +10,9 @@
 			"reauth_successful": "Re-authentication successful",
 			"reconfigure_successful": "Reconfigure successful"
 		},
+		"error": {
+			"invalid_folder": "The folder must be a full path inside a Proton Drive root, e.g. /my-files/HomeAssistant"
+		},
 		"progress": {
 			"awaiting_user": "Disclaimer: This is a third-party application not officially supported by Proton.\n\nPlease open the following link in your browser:\n\n{url}\n\nAuthenticate to your account then come back here.",
 			"downloading_cli": "Downloading Proton Drive CLI v{version}…\nThis may take a few minutes depending on your internet connection.",
