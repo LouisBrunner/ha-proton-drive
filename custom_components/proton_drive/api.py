@@ -99,6 +99,7 @@ class ProtonDriveClient:
     ARCHIVE_EXT = ".tar"
     PART_EXT = f"{ARCHIVE_EXT}.part"
     READ_CHUNK = 131_072
+    UPLOAD_PROGRESS_INTERVAL_S = 2
     DOWNLOAD_WINDOW = 4
     ALLOWED_DELETE_PREFIXES: ClassVar[list[Path]] = [
         Path("/my-files/"),
@@ -251,7 +252,7 @@ class ProtonDriveClient:
                     yield chunk
             LOGGER.debug("Finished yielding file %d/%d: %s", i + 1, len(files), name)
 
-    async def upload_backup(
+    async def upload_backup(  # noqa: PLR0915
         self,
         open_stream: Callable[[], Coroutine[Any, Any, AsyncIterator[bytes]]],
         backup: AgentBackup,
@@ -302,6 +303,12 @@ class ProtonDriveClient:
                 time.monotonic() - write_start,
             )
 
+            archive_pid: int | None = None
+
+            def _on_archive_start(pid: int) -> None:
+                nonlocal archive_pid
+                archive_pid = pid
+
             async def _upload(local_path: Path, timeout_s: float) -> None:
                 try:
                     await self.__cli.run(
@@ -311,6 +318,7 @@ class ProtonDriveClient:
                         str(self.__backup_folder),
                         timeout_s=timeout_s,
                         retries=2,
+                        on_start=_on_archive_start if local_path == archive_path else None,
                     )
                 except NameConflictError:
                     # A retry of our own timed-out-but-actually-completed attempt: our filenames
@@ -320,10 +328,12 @@ class ProtonDriveClient:
                         local_path.name,
                     )
 
-            # TODO: upload progress feedback is missing
             upload_start = time.monotonic()
             meta_task = asyncio.create_task(_upload(meta_path, ProtonCLI.METADATA_TIMEOUT_S))
             archive_task = asyncio.create_task(_upload(archive_path, ProtonCLI.TRANSFER_TIMEOUT_S))
+            progress_task = asyncio.create_task(
+                self.__report_upload_progress(lambda: archive_pid, archive_path, size, on_progress)
+            )
             try:
                 await asyncio.gather(meta_task, archive_task)
             except CLIError:
@@ -348,6 +358,8 @@ class ProtonDriveClient:
                 except CLIError:
                     LOGGER.exception("Failed to clean up orphaned files after upload failure")
                 raise
+            finally:
+                progress_task.cancel()
 
             LOGGER.debug("Uploaded %s in %.1fs", archive_name, time.monotonic() - upload_start)
             on_progress(bytes_uploaded=size)
@@ -390,6 +402,44 @@ class ProtonDriveClient:
         to_delete = map(self.__make_filepath, to_delete)
         to_delete = [f for f in to_delete if await self.__cli.exists(f)]
         await self.__cli.trash(*to_delete)
+
+    async def __report_upload_progress(
+        self,
+        get_pid: Callable[[], int | None],
+        path: Path,
+        size: int,
+        on_progress: OnProgressCallback,
+    ) -> None:
+        # The CLI reports no progress in --json mode, so infer it from how far into the archive
+        # file the process has read (second half of the bar; the first half is the local copy).
+        last = -1
+        while True:
+            await asyncio.sleep(self.UPLOAD_PROGRESS_INTERVAL_S)
+            pid = get_pid()
+            if pid is None:
+                continue
+            offset = await asyncio.to_thread(self.__read_offset, pid, path)
+            if offset is not None and offset != last:
+                last = offset
+                on_progress(bytes_uploaded=size // 2 + min(offset, size) // 2)
+
+    @staticmethod
+    def __read_offset(pid: int, path: Path) -> int | None:
+        """Return the current read offset of `pid` in the file at `path` (Linux only), if it has it open."""
+        fd_dir = Path("/proc") / str(pid) / "fd"
+        try:
+            for fd in fd_dir.iterdir():
+                try:
+                    if fd.readlink() != path:
+                        continue
+                    for line in (Path("/proc") / str(pid) / "fdinfo" / fd.name).read_text().splitlines():
+                        if line.startswith("pos:"):
+                            return int(line.split()[1])
+                except OSError, ValueError:
+                    continue
+        except OSError:
+            return None
+        return None
 
     def __can_delete_file(self, filename: Path) -> bool:
         # FIXME: see https://github.com/ProtonDriveApps/sdk/blob/main/cli/src/commands/fileSystem/commandFileSystemTrash.ts#L3
@@ -454,7 +504,7 @@ class ProtonDriveClient:
                     )
                     async with aiofiles.open(path / metadata_file) as f:
                         data = await f.read()
-            except (CLITimeoutError, NameConflictError):
+            except CLITimeoutError, NameConflictError:
                 if attempt >= attempts:
                     raise
                 LOGGER.debug("Retrying metadata download of %s (%d/%d)", metadata_file, attempt, attempts)

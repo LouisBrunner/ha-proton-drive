@@ -89,6 +89,10 @@ class NameConflictError(CLIError):
     """Exception to indicate a file/folder with the target name already exists."""
 
 
+class CLIEventsLockCorruptError(CLIError):
+    """Exception to indicate the CLI's events lock file is unreadable (e.g. truncated by a killed process)."""
+
+
 def _transform_version(version: AwesomeVersion | None) -> str:
     """
     Map a manifest version into the SDK's `{semver}-{channel}[+{suffix}]` shape.
@@ -119,6 +123,8 @@ class ProtonCLI:
     TRANSFER_TIMEOUT_S = 60 * 60
     TERMINATE_GRACE_S = 5
     LOCK_RETRIES = 5
+    EVENTS_LOCK_FILE = "events.lock"
+    CORRUPT_LOCK_MIN_AGE_S = 5
 
     STALE_AUTH_THRESHOLD = timedelta(hours=24)
     STALE_AUTH_REQUIRED_SUCCESSES = 5
@@ -505,14 +511,22 @@ class ProtonCLI:
         is_json: bool = True,
         timeout_s: float = DEFAULT_TIMEOUT_S,
         retries: int = 3,
+        on_start: Callable[[int], None] | None = None,
     ) -> Any:
-        """Run a CLI command and return the parsed JSON output."""
+        """
+        Run a CLI command and return the parsed JSON output.
+
+        `on_start` is called with the PID of every process spawned for this command (retries included).
+        """
         attempt = 0
         lock_attempt = 0
+        corrupt_attempt = 0
         uid = uuid4().hex[:8]
         async with self.__serialize_if_auth_stale(uid):
             while True:
                 run = await self.__run(*args, uid=uid)
+                if on_start is not None and run.process.pid is not None:
+                    on_start(run.process.pid)
                 try:
                     async with asyncio.timeout(timeout_s):
                         stdout, stderr = await run.process.communicate()
@@ -554,6 +568,28 @@ class ProtonCLI:
                     )
                     await asyncio.sleep(delay)
                     continue
+                except CLIEventsLockCorruptError:
+                    # The CLI never recovers from this on its own: it throws on every invocation until
+                    # the file is removed. Brief grace first, as a live process creates the file before writing it.
+                    if corrupt_attempt >= self.LOCK_RETRIES:
+                        raise
+                    corrupt_attempt += 1
+                    await asyncio.sleep(1)
+                    await asyncio.to_thread(self.__remove_corrupt_events_lock)
+                    continue
+
+    def __remove_corrupt_events_lock(self) -> None:
+        for lock_path in Path(self.__xdg).rglob(self.EVENTS_LOCK_FILE):
+            try:
+                if time.time() - lock_path.stat().st_mtime < self.CORRUPT_LOCK_MIN_AGE_S:
+                    continue
+                try:
+                    json.loads(lock_path.read_text())
+                except json.JSONDecodeError, UnicodeDecodeError:
+                    LOGGER.warning("Removing corrupt CLI events lock file %s", lock_path)
+                    lock_path.unlink(missing_ok=True)
+            except OSError:
+                LOGGER.exception("Failed to inspect CLI events lock file %s", lock_path)
 
     @classmethod
     def _process_run(cls, run: _CLIRun, stdout: bytes, stderr: bytes, *, is_json: bool = True) -> Any:
@@ -564,6 +600,9 @@ class ProtonCLI:
             is_db_locked = "SQLITE_BUSY" in stdout_text or "SQLITE_BUSY" in stderr_text
             is_name_conflict = "Name conflict on" in stdout_text and "already exists" in stdout_text
             is_not_found = "Node not found" in stderr_text
+            is_lock_corrupt = (
+                "events/lock.ts" in stdout_text + stderr_text and "JSON Parse error" in stdout_text + stderr_text
+            )
 
             # These are conditions the caller already expects and handles on its own (a retry, or
             # treating it as non-fatal) - a WARNING for every occurrence is just noise; DEBUG still
@@ -583,6 +622,9 @@ class ProtonCLI:
             if is_name_conflict:
                 msg = f"[{run.id}] Name conflict: {stdout_text}"
                 raise NameConflictError(msg)
+            if is_lock_corrupt:
+                msg = f"[{run.id}] CLI events lock file is corrupt"
+                raise CLIEventsLockCorruptError(msg)
             msg = stderr_text
             if is_not_found:
                 raise NodeNotFoundError(msg)
