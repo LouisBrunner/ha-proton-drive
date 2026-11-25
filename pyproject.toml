@@ -12,13 +12,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "pytest>=9.1.1",
-  "pytest-asyncio>=1.4.0",
-  "ruff==0.16.4",
-  "tombi==1.4.1",
-  "ty==0.0.74",
+  "pytest>=9.2.0",
+  "pytest-asyncio>=1.5.0",
+  "ruff==0.17.5",
+  "tombi==1.11.3",
+  "ty==0.0.105",
 ]
-docker = ["aiohasupervisor==0.6.0"]
+docker = ["aiohasupervisor==0.11.0"]
 hass = ["homeassistant==2026.4.0"]
 
 [tool.pytest.ini_options]
