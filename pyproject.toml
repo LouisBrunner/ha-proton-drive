@@ -6,7 +6,7 @@ version = "0"
 requires-python = ">=3.14.2"
 dependencies = [
   "aiofiles>=25.1.0",
-  "cachetools>=7.1.7",
+  "cachetools>=8.0.1",
   "cachetools-async>=0.0.5",
 ]
 
